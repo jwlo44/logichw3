@@ -375,8 +375,7 @@ DEFINE the following functions.
   (and (listp ls)
        (or (endp ls)
            (and (listp (first ls))
-                (listlistp (rest ls))))))#|ACL2s-ToDo-Line|#
-
+                (listlistp (rest ls))))))
 #|
 ;; 2. DEFINE the following function using permutation
 ;; permutation-list : ListList -> Boolean
@@ -471,19 +470,38 @@ them.
 
 
 ;; Write some tests to check that it behaves correctly
+(check= (permutation-list-help nil nil) t)
+(check= (permutation-list-help nil '((1) (2))) nil)
+(check= (permutation-list-help nil '(() ())) t)
+(check= (permutation-list-help '((1) (2)) nil) t)
+(test? (implies (and (listp fst) (listlistp ls) (endp ls)) (equal t (permutation-list-help fst ls))))
+(check= (permutation-list-help '(1) '((1) (2 3))) nil)
+(check= (permutation-list-help '(1 2 3) '((1 2 3) (3 2 1) (2 1 3))) t)
 
-#|
 ;; 5. DEFINE
 ;; permutation-list2 : Listlist -> Boolean
 ;; Takes a list of lists (ls) and determines whether all the sub-lists 
 ;; are permutations of each other. Passing in the empty list should return true.
 (defunc permutation-list2 (ls)
-   ...)
+   :input-contract (listlistp ls)
+   :output-contract (booleanp (permutation-list2 ls))
+   (if (endp ls) t
+     (permutation-list-help (first ls) (rest ls))))
 
 
 ;; Write tests to check that it behaves the same way as permutation-list
 ;; Is there a way to get ACL2s to do most of the testing for you?
-.........
+(test? (implies (and (listp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))
+(test? (implies (and (listp ls) (endp ls)) (equal (permutation-list2 ls) t)))
+(test? (implies (and (listp ls) (consp ls) (permutation-list2 ls)) (check-all-lengths (len (first ls)) ls)))
+(check= (permutation-list2 nil) t)
+(check= (permutation-list2 '(()()())) t)
+(check= (permutation-list2 '(()()(1))) nil)
+(check= (permutation-list2 '((1 1)(1)(1))) nil)
+(check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)#|ACL2s-ToDo-Line|#
+
+
+
 
 (defdata lor (listof rational))
 
@@ -544,7 +562,7 @@ b. Why must the input contract specify that the list is non-empty?
 
 
 |#
-
+#|
 ;; 7. DEFINE
 ;; move-smallest : Lor -> Lor
 ;; move-smallest looks at each pair of elements and swaps them if they are in 
