@@ -726,33 +726,73 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 (check= (drop-n-lowest '() 0) '())
 (check= (drop-n-lowest '(1) 1) '())
 (test? (implies (and (listp 1) (equal n 0)) (equal (drop-n-lowest l n) l)))
-(test? (implies (and (listp 1) (equal n (len l))) (endp (drop-n-lowest l n))))#|ACL2s-ToDo-Line|#
-
-
-
-
-#|
+(test? (implies (and (listp 1) (equal n (len l))) (endp (drop-n-lowest l n))))
 
 ;; 7. DEFINE
 ;; get-counted-grades : grade-category -> lorp
 ;; returns a list containing all of the grades that should be counted from this
 ;; category
 (defunc get-counted-grades (c)
-    ...)
+   :input-contract (grade-categoryp c)
+   :output-contract (lorp (get-counted-grades c))
+   (drop-n-lowest
+    (grade-category-grades c)
+    (if (> (- (len (grade-category-grades c)) (grade-category-num-counted c)) 0)
+      (- (len (grade-category-grades c)) (grade-category-num-counted c))
+      0)))
   
 ;; Write sufficient tests
-..............
+(check= (get-counted-grades (gradebook-assignments *cs2800*)) '(90 80 78 82 91 85 71 83 85 81))
+(check= (get-counted-grades (gradebook-quizes *cs2800*))
+        '(18 18 18 18 24 24 24 18 18 18 24 18 0 24 6 18 0 24 18 12))
+(check= (get-counted-grades (gradebook-tests *cs2800*)) '(74 78))
+(check= (get-counted-grades (grade-category 
+                              'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                              '()))
+         '())
+
+(check= (get-counted-grades (grade-category 
+                              'quizzes 
+                             *pct-quizzes* 1 1
+                              '(1 2)))
+         '(2))
+         
+(test? (implies (and (grade-categoryp c) (equal (grade-category-num-counted c) 0))
+                (equal (get-counted-grades c) '())))
+(test? (implies (and (grade-categoryp c) (equal (len (grade-category-grades c)) 0))
+                (equal (get-counted-grades c) '())))
 
 
 ;; 8. DEFINE
 ;; get-category-grade : grade-category -> rational
 ;; returns the overall grade in the given category as a rational 
 ;; in the range 0 <= r <= 1
+
 (defunc get-category-grade (c)
-    ...)
+   :input-contract (grade-categoryp c)
+   :output-contract (rationalp (get-category-grade c))
+   (/ (sum-l (get-counted-grades c)) (grade-category-num-counted c)))
 
 ;; Write sufficient tests
-.............
+(check= (get-category-grade (gradebook-assignments *cs2800*)) 413/5)
+(check= (get-category-grade (gradebook-quizes *cs2800*)) 171/10)
+(check= (get-category-grade (gradebook-tests *cs2800*)) 76)
+(check= (get-category-grade (grade-category 
+                              'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                              '()))
+         0)
+(check= (get-category-grade (grade-category 
+                              'quizzes 
+                             *pct-quizzes* 1 1
+                              '(1 2)))
+         2)
+
+(test? (implies (and (grade-categoryp c) (equal (grade-category-num-counted c) 0))
+                (equal (get-category-grade c) 0)))
+(test? (implies (and (grade-categoryp c) (equal (len (grade-category-grades c)) 0))
+                (equal (get-category-grade c) 0)))#|ACL2s-ToDo-Line|#
 
 
 ;; don't ask why this is necessary here; it's complicated
