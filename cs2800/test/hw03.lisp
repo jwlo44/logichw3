@@ -395,8 +395,6 @@ DEFINE the following functions.
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
 
 |#
-
-
 #|
 Programmers frequently need to switch between multiple implementations of the same 
 function. This can be for a variety of reasons, from performance to readability.
@@ -498,8 +496,7 @@ them.
 (check= (permutation-list2 '(()()())) t)
 (check= (permutation-list2 '(()()(1))) nil)
 (check= (permutation-list2 '((1 1)(1)(1))) nil)
-(check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)#|ACL2s-ToDo-Line|#
-
+(check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)
 
 
 
@@ -542,7 +539,8 @@ them.
             (s (first b)) )                 ; Second element of the pair
       (if (> f s)                           ; Should we swap?
         (cons s (cons f (rest b)))          ; Yes, swap the pair
-        (cons f (cons s (rest b)))))))      ; No, leave them alone    
+        (cons f (cons s (rest b)))))))#|ACL2s-ToDo-Line|#
+      ; No, leave them alone    
 
 
 #|
@@ -553,16 +551,17 @@ them.
  
 a. Why must the output contract specify that the list is non-empty?
 
-............
+The output contract must specify the list is non-empty so that the input contract can be satisfied when calling (rest b).
 
 
 b. Why must the input contract specify that the list is non-empty?
 
-............
+The input contract must specify the list is non empty so that we can call (rest l) in the first line.
+The input contract also follows the given signature for the function prompt in the comment.
 
 
 |#
-#|
+
 ;; 7. DEFINE
 ;; move-smallest : Lor -> Lor
 ;; move-smallest looks at each pair of elements and swaps them if they are in 
@@ -573,7 +572,7 @@ b. Why must the input contract specify that the list is non-empty?
   :output-contract (lorp (move-smallest l))
    ...)
 
-
+#|
 ;; 8. DEFINE
 ;; checksort : Lor -> Lor
 ;; checksort sorts the list by applying move-smallest until the list is sorted, checking
