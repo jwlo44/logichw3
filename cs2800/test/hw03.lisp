@@ -375,7 +375,8 @@ DEFINE the following functions.
   (and (listp ls)
        (or (endp ls)
            (and (listp (first ls))
-                (listlistp (rest ls))))))
+                (listlistp (rest ls))))))#|ACL2s-ToDo-Line|#
+
 #|
 ;; 2. DEFINE the following function using permutation
 ;; permutation-list : ListList -> Boolean
@@ -393,8 +394,8 @@ DEFINE the following functions.
 (check= (listlistp '('(1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '((1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
-|#
 
+|#
 
 
 #|
@@ -429,11 +430,26 @@ them.
 (check= (map-delete 1 '((1 2 3) (2 3))) '((2 3)(2 3)))
 (check= (map-delete nil '(()()())) '(()()()))
 (check= (map-delete nil '((())(())(()))) '(()()()))
-(test? (implies (listlistp x) (equal (len x) (len (map-delete y x)))))#|ACL2s-ToDo-Line|#
+(test? (implies (listlistp x) (equal (len x) (len (map-delete y x)))))
 
 
+;; checks all lists in ls have length nat
+(defunc check-all-lengths (nat ls)
+  :input-contract (and (natp nat) (listlistp ls))
+  :output-contract (booleanp (check-all-lengths nat ls))
+(if (endp ls)
+  t
+  (and (equal (len (first ls)) nat)
+       (check-all-lengths nat (rest ls)))))
 
-#|
+(test? (implies (and (natp nat) (> 0 nat) (listlistp ls)) (equal nil (check-all-lengths nat ls))))
+(test? (implies (and (listlistp ls) (endp ls) (natp x)) (equal t (check-all-lengths x ls))))
+(test? (implies (and (listlistp ls) (natp x) ( > (len ls) 2) (not (equal (len (first ls)) (len (second ls))))) (equal nil (check-all-lengths x ls))))
+(check= (check-all-lengths 1 (list '(1) '(1 2))) nil)
+(check= (check-all-lengths 1 (list '(1) '(1 2))) nil)
+(check= (check-all-lengths 2 (list '(1 2) '(1 2))) t)
+(check= (check-all-lengths 3 (list '(1 2) '(1 2))) nil)
+
 ;; 4. DEFINE (use map-delete and NOT permutation)
 ;; permutation-list-help : List x ListList -> Boolean
 ;; Takes an initial list fst and a list of lists (ls) to compare against it.
@@ -441,12 +457,22 @@ them.
 ;; You can (and should) write your own helper functions for this helper function.
 ;; PLEASE USE A COND IN YOUR FUNCTION
 (defunc permutation-list-help (fst ls)
-   ...)
+  :input-contract (and (listp fst) (listlistp ls))
+  :output-contract (booleanp (permutation-list-help fst ls))
+  (cond
+   ((endp ls) t)
+   ((endp fst) (check-all-lengths 0 ls))
+   (t
+    (let ((deleted-lists (map-delete (first fst) ls)))
+    (and 
+       (check-all-lengths (- (len fst) 1)
+                          deleted-lists)
+      (permutation-list-help (rest fst) deleted-lists))))))
 
 
 ;; Write some tests to check that it behaves correctly
-........
 
+#|
 ;; 5. DEFINE
 ;; permutation-list2 : Listlist -> Boolean
 ;; Takes a list of lists (ls) and determines whether all the sub-lists 
