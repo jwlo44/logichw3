@@ -586,7 +586,7 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; 1. DEFINE an enumerated datatype for category names
 ;; (exam, assignment or quiz).
- (defdata category-name (or 'exam 'assignments 'quiz))
+ (defdata category-name (or 'exams 'assignments 'quizzes))
 
 (check= (category-namep 'assignments) t)
 (check= (category-namep 'tv) nil)
@@ -646,8 +646,7 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 (check= (lettergradep 'F) t)
 (check= (lettergradep 'E) nil)
 (check= (lettergradep 'A+) nil)
-(check= (lettergradep 'D+) t)#|ACL2s-ToDo-Line|#
-
+(check= (lettergradep 'D+) t)
 
 ;; Note: These constants will be useful later in the program
 (defconst *num-assignments* 10)
@@ -714,11 +713,25 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; drop-n-lowest : Lor x Nat -> Lor
 ;; removes the n lowest rationals from the list, up to the length of the list
 (defunc drop-n-lowest (l n)
-  ...)
+  :input-contract (and (lorp l) (natp n))
+  :output-contract (lorp (drop-n-lowest l n))
+  (if (or (endp l) (equal n 0))
+    l
+    (drop-n-lowest (delete (min-l l) l) (- n 1))))
 
 
 ;; Write sufficient tests
-............
+(check= (drop-n-lowest '(1 2 4 5) 1) '(2 4 5))
+(check= (drop-n-lowest '(1 4 5 2) 2) '(4 5))
+(check= (drop-n-lowest '() 0) '())
+(check= (drop-n-lowest '(1) 1) '())
+(test? (implies (and (listp 1) (equal n 0)) (equal (drop-n-lowest l n) l)))
+(test? (implies (and (listp 1) (equal n (len l))) (endp (drop-n-lowest l n))))#|ACL2s-ToDo-Line|#
+
+
+
+
+#|
 
 ;; 7. DEFINE
 ;; get-counted-grades : grade-category -> lorp
