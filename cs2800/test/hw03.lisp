@@ -600,16 +600,21 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 (check= (category-weightp 2/3) t)
 (check= (category-weightp 5) nil)
-(check= (category-weightp -2/3) nil)#|ACL2s-ToDo-Line|#
+(check= (category-weightp -2/3) nil)
 
-
- #|
 
 ;; 3. DEFINE a grade category as a record containing a name, weight, num-counted,
 ;; max-score, and grades. Num-counted and max-score shoud be positive naturals, 
 ;; and grades should be a list of rationals (to account for partial credit). 
 ;; More concretely, the tests below should pass.
-(defdata grade-category ...)
+
+
+(defdata lor (listof rational))                        ; REMOVE THIS!!!!!
+(defdata grade-category (record (name . category-name)
+                                (weight . category-weight)
+                                (num-counted . pos)
+                                (max-score . pos)
+                                (grades . lor)))
 
 
 (test? (implies (grade-categoryp c) (category-namep (grade-category-name c))))
@@ -620,20 +625,29 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; 4. DEFINE a gradebook as a record containing three grade categories: assignments,
 ;; quizes, and tests.
-(defdata gradebook ...)
+;;(defdata gradebook ...)
+
+(defdata gradebook (record (assignments . grade-category)
+                           (quizes . grade-category)
+                           (tests . grade-category)))
 
 (test? (implies (gradebookp gb) (grade-categoryp (gradebook-assignments gb))))
 
 
 ;; 5. DEFINE a datatype for letter grades (A, A-, B+, B,.... F)
-(defdata lettergrade ...)
+(defdata lettergrade (or 'A 'A- 
+                         'B+ 'B 'B-
+                         'C+ 'C 'C-
+                         'D+ 'D 'D-
+                         'F))
 
 
 (check= (lettergradep 'A) t)
 (check= (lettergradep 'F) t)
 (check= (lettergradep 'E) nil)
 (check= (lettergradep 'A+) nil)
-(check= (lettergradep 'D+) t)
+(check= (lettergradep 'D+) t)#|ACL2s-ToDo-Line|#
+
 
 ;; Note: These constants will be useful later in the program
 (defconst *num-assignments* 10)
@@ -694,6 +708,7 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; this line is for ACL2s
 (sig delete (all (listof :b)) => (listof :b))
+
 
 ;; 6. DEFINE
 ;; drop-n-lowest : Lor x Nat -> Lor
