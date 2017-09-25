@@ -364,7 +364,7 @@ DEFINE the following functions.
 (check= (permutation '(1 2 4) '(4 1 2 5)) nil)
 (check= (permutation '(1 2 4) '(4 4 2)) nil)
 (check= (permutation '(1 2 4 5) '(4 1 2)) nil)
-(test? (implies (not (equal (len x) (len y))) (equal (permutation x y) nil)))
+(test? (implies (and (listp x) (listp y) (not (equal (len x) (len y)))) (equal (permutation x y) nil)))
 
 ;; GIVEN
 ;; listlistp : All -> Boolean
@@ -375,8 +375,7 @@ DEFINE the following functions.
   (and (listp ls)
        (or (endp ls)
            (and (listp (first ls))
-                (listlistp (rest ls))))))#|ACL2s-ToDo-Line|#
-
+                (listlistp (rest ls))))))
 #|
 ;; 2. DEFINE the following function using permutation
 ;; permutation-list : ListList -> Boolean
@@ -387,17 +386,15 @@ DEFINE the following functions.
   :output-contract (booleanp (permutation-list ls))
   (if (< (len ls) 2)
     t
-    (permutation (first ls) nil)
-    ))
-;;(and (permutation (first ls) (second ls)) 
-   ;;      (permutation-list (rest ls)))))
+    (and (permutation (first ls) (second ls)) 
+         (permutation-list (rest ls)))))
 
 ;; Write sufficient tests including use of a test? (not just check=)
 (check= (listlistp '('(1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '((1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
-
 |#
+
 
 
 #|
@@ -418,11 +415,23 @@ them.
 ;; Returns a new list whose element lists are the result of calling delete 
 ;; on the old list's elements.
 (defunc map-delete (e ls)
-   ...)
+  :input-contract (listlistp ls)
+  :output-contract (listlistp (map-delete e ls))
+   ;; call delete on all elements of listlist
+  (if (endp ls)
+    nil
+    (cons (delete e (first ls)) (map-delete e (rest ls)))))
 
 
 ;; Write sufficient tests
-.........
+(test? (implies (endp x) (equal (map-delete e x) nil)))
+(check= (map-delete 1 '((1) (1) (1))) '(()()()))
+(check= (map-delete 1 '((1 2 3) (2 3))) '((2 3)(2 3)))
+(check= (map-delete nil '(()()())) '(()()()))
+(check= (map-delete nil '((())(())(()))) '(()()()))
+(test? (implies (listlistp x) (equal (len x) (len (map-delete y x)))))#|ACL2s-ToDo-Line|#
+
+
 
 #|
 ;; 4. DEFINE (use map-delete and NOT permutation)
