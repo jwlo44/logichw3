@@ -375,8 +375,7 @@ DEFINE the following functions.
   (and (listp ls)
        (or (endp ls)
            (and (listp (first ls))
-                (listlistp (rest ls))))))#|ACL2s-ToDo-Line|#
-
+                (listlistp (rest ls))))))
 #|
 ;; 2. DEFINE the following function using permutation
 ;; permutation-list : ListList -> Boolean
@@ -396,7 +395,6 @@ DEFINE the following functions.
 (check= (listlistp '('(1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '((1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
-
 |#
 
 
@@ -411,7 +409,7 @@ its definition and processes all of the lists at once. Start with map-delete bel
 You may need additional helper functions. If you write helper functions, make sure to test
 them.
 
-|#
+
 
 ;; 3. DEFINE
 ;; map-delete : All x ListList -> ListList
@@ -424,7 +422,6 @@ them.
 ;; Write sufficient tests
 .........
 
-#|
 ;; 4. DEFINE (use map-delete and NOT permutation)
 ;; permutation-list-help : List x ListList -> Boolean
 ;; Takes an initial list fst and a list of lists (ls) to compare against it.
@@ -566,6 +563,8 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; Write some tests
 .........
 
+
+|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Calculating Your Grade
 ;;
@@ -587,18 +586,24 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; 1. DEFINE an enumerated datatype for category names
 ;; (exam, assignment or quiz).
- (defdata category-name ...)
+ (defdata category-name (or 'exam 'assignments 'quiz))
 
 (check= (category-namep 'assignments) t)
 (check= (category-namep 'tv) nil)
 
+
+
 ;; 2. DEFINE the possible weights as the range of rationals from 0 to 1, inclusive
- (defdata category-weight ...)
+ (defdata category-weight (range rational (0 < _ < 1)))
+
 
 
 (check= (category-weightp 2/3) t)
 (check= (category-weightp 5) nil)
-(check= (category-weightp -2/3) nil)
+(check= (category-weightp -2/3) nil)#|ACL2s-ToDo-Line|#
+
+
+ #|
 
 ;; 3. DEFINE a grade category as a record containing a name, weight, num-counted,
 ;; max-score, and grades. Num-counted and max-score shoud be positive naturals, 
