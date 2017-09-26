@@ -2,6 +2,8 @@
 ; (Nothing to see here!  Your actual file is after this initialization code);
 
 #|
+
+
 Pete Manolios
 Fri Jan 27 09:39:00 EST 2012
 ----------------------------
@@ -364,7 +366,7 @@ DEFINE the following functions.
 (check= (permutation '(1 2 4) '(4 1 2 5)) nil)
 (check= (permutation '(1 2 4) '(4 4 2)) nil)
 (check= (permutation '(1 2 4 5) '(4 1 2)) nil)
-(test? (implies (not (equal (len x) (len y))) (equal (permutation x y) nil)))
+(test? (implies (and (listp x) (listp y) (not (equal (len x) (len y)))) (equal (permutation x y) nil)))
 
 ;; GIVEN
 ;; listlistp : All -> Boolean
@@ -386,18 +388,14 @@ DEFINE the following functions.
   :output-contract (booleanp (permutation-list ls))
   (if (< (len ls) 2)
     t
-    (permutation (first ls) nil)
-    ))
-;;(and (permutation (first ls) (second ls)) 
-   ;;      (permutation-list (rest ls)))))
+    (and (permutation (first ls) (second ls)) 
+         (permutation-list (rest ls)))))
 
 ;; Write sufficient tests including use of a test? (not just check=)
 (check= (listlistp '('(1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '((1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
 |#
-
-
 #|
 Programmers frequently need to switch between multiple implementations of the same 
 function. This can be for a variety of reasons, from performance to readability.
@@ -416,11 +414,39 @@ them.
 ;; Returns a new list whose element lists are the result of calling delete 
 ;; on the old list's elements.
 (defunc map-delete (e ls)
-   ...)
+  :input-contract (listlistp ls)
+  :output-contract (listlistp (map-delete e ls))
+   ;; call delete on all elements of listlist
+  (if (endp ls)
+    nil
+    (cons (delete e (first ls)) (map-delete e (rest ls)))))
 
 
 ;; Write sufficient tests
-.........
+(test? (implies (endp x) (equal (map-delete e x) nil)))
+(check= (map-delete 1 '((1) (1) (1))) '(()()()))
+(check= (map-delete 1 '((1 2 3) (2 3))) '((2 3)(2 3)))
+(check= (map-delete nil '(()()())) '(()()()))
+(check= (map-delete nil '((())(())(()))) '(()()()))
+(test? (implies (listlistp x) (equal (len x) (len (map-delete y x)))))
+
+
+;; checks all lists in ls have length nat
+(defunc check-all-lengths (nat ls)
+  :input-contract (and (natp nat) (listlistp ls))
+  :output-contract (booleanp (check-all-lengths nat ls))
+(if (endp ls)
+  t
+  (and (equal (len (first ls)) nat)
+       (check-all-lengths nat (rest ls)))))
+
+(test? (implies (and (natp nat) (> 0 nat) (listlistp ls)) (equal nil (check-all-lengths nat ls))))
+(test? (implies (and (listlistp ls) (endp ls) (natp x)) (equal t (check-all-lengths x ls))))
+(test? (implies (and (listlistp ls) (natp x) ( > (len ls) 2) (not (equal (len (first ls)) (len (second ls))))) (equal nil (check-all-lengths x ls))))
+(check= (check-all-lengths 1 (list '(1) '(1 2))) nil)
+(check= (check-all-lengths 1 (list '(1) '(1 2))) nil)
+(check= (check-all-lengths 2 (list '(1 2) '(1 2))) t)
+(check= (check-all-lengths 3 (list '(1 2) '(1 2))) nil)
 
 ;; 4. DEFINE (use map-delete and NOT permutation)
 ;; permutation-list-help : List x ListList -> Boolean
@@ -429,23 +455,52 @@ them.
 ;; You can (and should) write your own helper functions for this helper function.
 ;; PLEASE USE A COND IN YOUR FUNCTION
 (defunc permutation-list-help (fst ls)
-   ...)
+  :input-contract (and (listp fst) (listlistp ls))
+  :output-contract (booleanp (permutation-list-help fst ls))
+  (cond
+   ((endp ls) t)
+   ((endp fst) (check-all-lengths 0 ls))
+   (t
+    (let ((deleted-lists (map-delete (first fst) ls)))
+    (and 
+       (check-all-lengths (- (len fst) 1)
+                          deleted-lists)
+      (permutation-list-help (rest fst) deleted-lists))))))
 
 
 ;; Write some tests to check that it behaves correctly
-........
+(check= (permutation-list-help nil nil) t)
+(check= (permutation-list-help nil '((1) (2))) nil)
+(check= (permutation-list-help nil '(() ())) t)
+(check= (permutation-list-help '((1) (2)) nil) t)
+(test? (implies (and (listp fst) (listlistp ls) (endp ls)) (equal t (permutation-list-help fst ls))))
+(check= (permutation-list-help '(1) '((1) (2 3))) nil)
+(check= (permutation-list-help '(1 2 3) '((1 2 3) (3 2 1) (2 1 3))) t)
 
 ;; 5. DEFINE
 ;; permutation-list2 : Listlist -> Boolean
 ;; Takes a list of lists (ls) and determines whether all the sub-lists 
 ;; are permutations of each other. Passing in the empty list should return true.
 (defunc permutation-list2 (ls)
-   ...)
+   :input-contract (listlistp ls)
+   :output-contract (booleanp (permutation-list2 ls))
+   (if (endp ls) t
+     (permutation-list-help (first ls) (rest ls))))
 
 
 ;; Write tests to check that it behaves the same way as permutation-list
 ;; Is there a way to get ACL2s to do most of the testing for you?
-.........
+(test? (implies (and (listlistp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))
+(test? (implies (and (listlistp ls) (consp ls) (permutation-list2 ls)) (check-all-lengths (len (first ls)) ls)))
+(check= (permutation-list2 nil) t)
+(check= (permutation-list2 '(()()())) t)
+(check= (permutation-list2 '(()()(1))) nil)
+(check= (permutation-list2 '((1 1)(1)(1))) nil)
+(check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)
+;; below is how we would test same functionality between the two functions if we had defined permutation-list
+;;(test? (implies (listp ls) (equal (permutation-list2 ls) (permutation-list ls))))
+
+
 
 (defdata lor (listof rational))
 
@@ -497,12 +552,13 @@ them.
  
 a. Why must the output contract specify that the list is non-empty?
 
-............
+The output contract must specify the list is non-empty so that the input contract can be satisfied when calling (rest b).
 
 
 b. Why must the input contract specify that the list is non-empty?
 
-............
+The input contract must specify the list is non empty so that we can call (rest l) in the first line.
+The input contract also follows the given signature for the function prompt in the comment.
 
 
 |#
@@ -515,8 +571,31 @@ b. Why must the input contract specify that the list is non-empty?
 (defunc move-smallest (l)
   :input-contract (lorp l)
   :output-contract (lorp (move-smallest l))
-   ...)
+   (if (endp l)
+     l
+     (move-smallest-ne l))) ;; this seems too obvious (could also have copied body from move smallest ne)
+(test? (implies (and (listp l) (consp l)) (equal (move-smallest l) (move-smallest-ne l))))
+(test? (implies (and (listp l) (endp l)) (equal (move-smallest l) nil)))
+(check= (move-smallest '(9 7 3 5 6 1)) '(1 9 7 3 5 6))
+(check= (move-smallest '(9 7 3 1 5 6 1)) '(1 9 7 3 1 5 6))
 
+
+;; sorted-lorp checks if a lor is sorted
+;; oh we missed the fact that orderedp was provided. whoops.
+(defunc sorted-lorp (l)
+  :input-contract (lorp l)
+  :output-contract (booleanp (sorted-lorp l))
+  (cond
+   ((endp l) t)
+   ((endp (rest l)) t)
+   (t 
+    (and (<= (first l) (second l))
+         (sorted-lorp (rest l))))))
+(check= (sorted-lorp nil) t)
+(check= (sorted-lorp '(1)) t)
+(check= (sorted-lorp '(2 1 5)) nil)
+(check= (sorted-lorp '(3 4 7)) t)
+(check= (sorted-lorp '(3 4 4 7)) t)
 
 ;; 8. DEFINE
 ;; checksort : Lor -> Lor
@@ -525,11 +604,20 @@ b. Why must the input contract specify that the list is non-empty?
 ;; terminates is highly non-trivial and far beyond ACL2s without guidance.
 :program
 (defunc checksort (l)
-   ...)
+  :input-contract (lorp l)
+  :output-contract (lorp (checksort l))
+  (if (sorted-lorp l)
+    l
+    (checksort (move-smallest l))))
 
 
 ;; Write some tests
-............
+(check= (checksort nil) nil)
+(test? (implies (and (lorp l) (consp l) (endp (rest l))) (equal (checksort l) l)))
+(test? (implies (lorp l) (equal (len l) (len (checksort l)))))
+(test? (implies (lorp l) (sorted-lorp (checksort l))))
+(check= (checksort '(3 1 2 45 -10 3)) '(-10 1 2 3 3 45))
+
 
 :logic
 
@@ -544,12 +632,24 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; move-n-smallest : Lor x Nat -> Lor
 ;; move-n-smallest applies move-smallest to the list n times
 (defunc move-n-smallest (l n)
-   ...)
+  :input-contract (and (lorp l) (natp n))
+  :output-contract (lorp (move-n-smallest l n))
+  (if (equal 0 n) l
+    (move-n-smallest (move-smallest l) (- n 1))))
 
   
 
 ;; Tests
-............
+; note: it's ok if n is greater than (len l)
+(test? (implies (and (lorp l) (natp n) (<= (- (len l) 1) n)) (sorted-lorp (move-n-smallest l n))))
+(test? (implies (and (lorp l) (natp n) (equal 0 n)) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n) (endp l)) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n) (endp (rest l))) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n)) (equal (len l) (len (move-n-smallest l n)))))
+(check= (move-n-smallest '(4 5 1) 1) '(1 4 5))
+(check= (move-n-smallest '(4 5 1) 2) '(1 4 5))
+(check= (move-n-smallest '(6 5 1) 2) '(1 5 6))
+(check= (move-n-smallest '(6 5 1) 7) '(1 5 6))  
 
 ;; 10. DEFINE
 ;; repeatsort : Lor -> Lor
@@ -558,13 +658,21 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; What is the minimum number of calls to move-n-smallest necessary
 ;; to ensure a sorted list.
 (defunc repeatsort (l)
-  .........)
+  :input-contract (lorp l)
+  :output-contract (lorp (repeatsort l))
+  (if (endp l) l
+    (move-n-smallest l (- (len l) 1))))
 
 ;; Write some tests
-.........
+(test? (implies (lorp l) (sorted-lorp (repeatsort l))))
+(test? (implies (and (lorp l) (consp l) (endp (rest l))) (equal l (repeatsort l))))
+(test? (implies (and (lorp l) (sorted-lorp l)) (equal l (repeatsort l))))
+(test? (implies (lorp l) (equal (len l) (len (repeatsort l)))))
+(check= (repeatsort nil) nil)
+(check= (repeatsort '(1 3 2 5 1)) '(1 1 2 3 5))#|ACL2s-ToDo-Line|#
 
 
-|#
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Calculating Your Grade
 ;;
@@ -785,7 +893,6 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
          0)
 (check= (get-category-grade (grade-category 
                               'quizzes 
-                             *pct-quizzes* 1 1
                               '(1 2)))
          2)
 
