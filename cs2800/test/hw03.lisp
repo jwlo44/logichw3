@@ -2,6 +2,8 @@
 ; (Nothing to see here!  Your actual file is after this initialization code);
 
 #|
+
+
 Pete Manolios
 Fri Jan 27 09:39:00 EST 2012
 ----------------------------
@@ -393,7 +395,6 @@ DEFINE the following functions.
 (check= (listlistp '('(1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '((1 2 3)(3 2 1) (2 1 3))) t)
 (check= (permutation-list '('(1 2 3)(3 2 1) (3 2 1 3))) nil)
-
 |#
 #|
 Programmers frequently need to switch between multiple implementations of the same 
@@ -406,7 +407,7 @@ its definition and processes all of the lists at once. Start with map-delete bel
 You may need additional helper functions. If you write helper functions, make sure to test
 them.
 
-|#
+
 
 ;; 3. DEFINE
 ;; map-delete : All x ListList -> ListList
@@ -672,8 +673,6 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 
 
-
-#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Calculating Your Grade
 ;;
@@ -695,24 +694,35 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; 1. DEFINE an enumerated datatype for category names
 ;; (exam, assignment or quiz).
- (defdata category-name ...)
+ (defdata category-name (or 'exams 'assignments 'quizzes))
 
 (check= (category-namep 'assignments) t)
 (check= (category-namep 'tv) nil)
 
+
+
 ;; 2. DEFINE the possible weights as the range of rationals from 0 to 1, inclusive
- (defdata category-weight ...)
+ (defdata category-weight (range rational (0 < _ < 1)))
+
 
 
 (check= (category-weightp 2/3) t)
 (check= (category-weightp 5) nil)
 (check= (category-weightp -2/3) nil)
 
+
 ;; 3. DEFINE a grade category as a record containing a name, weight, num-counted,
 ;; max-score, and grades. Num-counted and max-score shoud be positive naturals, 
 ;; and grades should be a list of rationals (to account for partial credit). 
 ;; More concretely, the tests below should pass.
-(defdata grade-category ...)
+
+
+(defdata lor (listof rational))                        ; REMOVE THIS!!!!!
+(defdata grade-category (record (name . category-name)
+                                (weight . category-weight)
+                                (num-counted . pos)
+                                (max-score . pos)
+                                (grades . lor)))
 
 
 (test? (implies (grade-categoryp c) (category-namep (grade-category-name c))))
@@ -723,13 +733,21 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; 4. DEFINE a gradebook as a record containing three grade categories: assignments,
 ;; quizes, and tests.
-(defdata gradebook ...)
+;;(defdata gradebook ...)
+
+(defdata gradebook (record (assignments . grade-category)
+                           (quizes . grade-category)
+                           (tests . grade-category)))
 
 (test? (implies (gradebookp gb) (grade-categoryp (gradebook-assignments gb))))
 
 
 ;; 5. DEFINE a datatype for letter grades (A, A-, B+, B,.... F)
-(defdata lettergrade ...)
+(defdata lettergrade (or 'A 'A- 
+                         'B+ 'B 'B-
+                         'C+ 'C 'C-
+                         'D+ 'D 'D-
+                         'F))
 
 
 (check= (lettergradep 'A) t)
@@ -798,43 +816,96 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; this line is for ACL2s
 (sig delete (all (listof :b)) => (listof :b))
 
+
 ;; 6. DEFINE
 ;; drop-n-lowest : Lor x Nat -> Lor
 ;; removes the n lowest rationals from the list, up to the length of the list
 (defunc drop-n-lowest (l n)
-  ...)
+  :input-contract (and (lorp l) (natp n))
+  :output-contract (lorp (drop-n-lowest l n))
+  (if (or (endp l) (equal n 0))
+    l
+    (drop-n-lowest (delete (min-l l) l) (- n 1))))
 
 
 ;; Write sufficient tests
-............
+(check= (drop-n-lowest '(1 2 4 5) 1) '(2 4 5))
+(check= (drop-n-lowest '(1 4 5 2) 2) '(4 5))
+(check= (drop-n-lowest '() 0) '())
+(check= (drop-n-lowest '(1) 1) '())
+(test? (implies (and (listp 1) (equal n 0)) (equal (drop-n-lowest l n) l)))
+(test? (implies (and (listp 1) (equal n (len l))) (endp (drop-n-lowest l n))))
 
 ;; 7. DEFINE
 ;; get-counted-grades : grade-category -> lorp
 ;; returns a list containing all of the grades that should be counted from this
 ;; category
 (defunc get-counted-grades (c)
-    ...)
+   :input-contract (grade-categoryp c)
+   :output-contract (lorp (get-counted-grades c))
+   (drop-n-lowest
+    (grade-category-grades c)
+    (if (> (- (len (grade-category-grades c)) (grade-category-num-counted c)) 0)
+      (- (len (grade-category-grades c)) (grade-category-num-counted c))
+      0)))
   
 ;; Write sufficient tests
-..............
+(check= (get-counted-grades (gradebook-assignments *cs2800*)) '(90 80 78 82 91 85 71 83 85 81))
+(check= (get-counted-grades (gradebook-quizes *cs2800*))
+        '(18 18 18 18 24 24 24 18 18 18 24 18 0 24 6 18 0 24 18 12))
+(check= (get-counted-grades (gradebook-tests *cs2800*)) '(74 78))
+(check= (get-counted-grades (grade-category 
+                              'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                              '()))
+         '())
+
+(check= (get-counted-grades (grade-category 
+                              'quizzes 
+                             *pct-quizzes* 1 1
+                              '(1 2)))
+         '(2))
+         
+(test? (implies (and (grade-categoryp c) (equal (grade-category-num-counted c) 0))
+                (equal (get-counted-grades c) '())))
+(test? (implies (and (grade-categoryp c) (equal (len (grade-category-grades c)) 0))
+                (equal (get-counted-grades c) '())))
 
 
 ;; 8. DEFINE
 ;; get-category-grade : grade-category -> rational
 ;; returns the overall grade in the given category as a rational 
 ;; in the range 0 <= r <= 1
+
 (defunc get-category-grade (c)
-    ...)
+   :input-contract (grade-categoryp c)
+   :output-contract (rationalp (get-category-grade c))
+   (/ (sum-l (get-counted-grades c)) (grade-category-num-counted c)))
 
 ;; Write sufficient tests
-.............
+(check= (get-category-grade (gradebook-assignments *cs2800*)) 413/5)
+(check= (get-category-grade (gradebook-quizes *cs2800*)) 171/10)
+(check= (get-category-grade (gradebook-tests *cs2800*)) 76)
+(check= (get-category-grade (grade-category 
+                              'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                              '()))
+         0)
+(check= (get-category-grade (grade-category 
+                              'quizzes 
+                              '(1 2)))
+         2)
 
+(test? (implies (and (grade-categoryp c) (equal (grade-category-num-counted c) 0))
+                (equal (get-category-grade c) 0)))
+(test? (implies (and (grade-categoryp c) (equal (len (grade-category-grades c)) 0))
+                (equal (get-category-grade c) 0)))
 
 ;; don't ask why this is necessary here; it's complicated
 :program
 
 ;; 9. DEFINE
-;; get-category-grade : gradebook -> lettergrade
+;; get-grade : gradebook -> lettergrade
 ;; returns the overall grade in class as a letter grade. For the purposes of this
 ;; assignment, assume that grades are assigned to the following ranges:
 ;; F: 0 <= _ < 50
@@ -850,9 +921,53 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; A-: 90 <= _ < 94
 ;; A: 94 <= _ <= 100
 ;; Please define constansts for the letter grade ranges
-(defunc get-grade (gb)
-    ...)
 
+(defunc get-letter-grade (num-grade) 
+    :input-contract (rationalp num-grade)
+    :output-contract (lettergradep (get-letter-grade num-grade))
+        (cond  ((>= num-grade 94) 'A)
+            ((>= num-grade 90) 'A-)
+            ((>= num-grade 87) 'B+)
+            ((>= num-grade 84) 'B)
+            ((>= num-grade 80) 'B-)
+            ((>= num-grade 77) 'C+)
+            ((>= num-grade 74) 'C)
+            ((>= num-grade 70) 'C-)
+            ((>= num-grade 65) 'D+)
+            ((>= num-grade 60) 'D)
+            ((>= num-grade 50) 'D-)
+            (T 'F)))
+
+(defunc get-grade (gb)
+  :input-contract (gradebookp gb)
+  :output-contract (lettergradep (get-grade gb))
+    (let ((num-grade (+ 
+     (* (get-category-grade (gradebook-assignments gb))
+        (grade-category-weight (gradebook-assignments gb)))
+     (+ (* (get-category-grade (gradebook-quizes gb)) 
+           (grade-category-weight (gradebook-quizes gb)))
+        (* (get-category-grade (gradebook-tests gb)) 
+           (grade-category-weight (gradebook-tests gb)))))))
+      (get-letter-grade num-grade)))
+
+
+      
+(defconst *cs28001* 
+  (gradebook (grade-category 'assignments 
+                             *pct-assignments* *num-assignments* *assignments-max*
+                             '())
+             (grade-category 'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                             '())
+             (grade-category 'exams 
+                             *pct-exams* *num-exams* *exams-max*
+                             '())))
 
 ;; Write sufficient tests
-...........|#
+(check= (get-grade *cs2800*) 'D+)
+(check= (get-grade *cs28001*) 'F)
+(test? (implies (and (gradebookp gb) (equal (grade-category-num-counted (gradebook-assignments gb)) 0)
+                     (equal (grade-category-num-counted (gradebook-tests gb)) 0)
+                     (equal (grade-category-num-counted (gradebook-quizzes gb)) 0))
+                (equal (get-category-grade c) 'F)))#|ACL2s-ToDo-Line|#
+
