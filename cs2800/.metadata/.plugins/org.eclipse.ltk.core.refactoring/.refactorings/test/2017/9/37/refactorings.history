@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;test/mybook.lisp&apos; to &apos;hw02.lisp&apos;" description="Rename resource &apos;mybook.lisp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="mybook.lisp" name="hw02.lisp" stamp="1505486722834" updateReferences="true"/>
-</session>
