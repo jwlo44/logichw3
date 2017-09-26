@@ -497,6 +497,7 @@ them.
 (check= (permutation-list2 '(()()(1))) nil)
 (check= (permutation-list2 '((1 1)(1)(1))) nil)
 (check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)
+(test? (implies (listp ls) (equal (permutation-list2 ls) (permutation-list ls))))
 
 
 
@@ -539,8 +540,7 @@ them.
             (s (first b)) )                 ; Second element of the pair
       (if (> f s)                           ; Should we swap?
         (cons s (cons f (rest b)))          ; Yes, swap the pair
-        (cons f (cons s (rest b)))))))#|ACL2s-ToDo-Line|#
-      ; No, leave them alone    
+        (cons f (cons s (rest b)))))))      ; No, leave them alone    
 
 
 #|
@@ -570,9 +570,31 @@ The input contract also follows the given signature for the function prompt in t
 (defunc move-smallest (l)
   :input-contract (lorp l)
   :output-contract (lorp (move-smallest l))
-   ...)
+   (if (endp l)
+     l
+     (move-smallest-ne l))) ;; this seems too obvious (could also have copied body from move smallest ne)
+(test? (implies (and (listp l) (consp l)) (equal (move-smallest l) (move-smallest-ne l))))
+(test? (implies (and (listp l) (endp l)) (equal (move-smallest l) nil)))
+(check= (move-smallest '(9 7 3 5 6 1)) '(1 9 7 3 5 6))
+(check= (move-smallest '(9 7 3 1 5 6 1)) '(1 9 7 3 1 5 6))
 
-#|
+
+;; sorted-lorp checks if a lor is sorted
+(defunc sorted-lorp (l)
+  :input-contract (lorp l)
+  :output-contract (booleanp (sorted-lorp l))
+  (cond
+   ((endp l) t)
+   ((endp (rest l)) t)
+   (t 
+    (and (<= (first l) (second l))
+         (sorted-lorp (rest l))))))
+(check= (sorted-lorp nil) t)
+(check= (sorted-lorp '(1)) t)
+(check= (sorted-lorp '(2 1 5)) nil)
+(check= (sorted-lorp '(3 4 7)) t)
+(check= (sorted-lorp '(3 4 4 7)) t)
+
 ;; 8. DEFINE
 ;; checksort : Lor -> Lor
 ;; checksort sorts the list by applying move-smallest until the list is sorted, checking
@@ -580,12 +602,22 @@ The input contract also follows the given signature for the function prompt in t
 ;; terminates is highly non-trivial and far beyond ACL2s without guidance.
 :program
 (defunc checksort (l)
-   ...)
+  :input-contract (lorp l)
+  :output-contract (lorp (checksort l))
+  (if (sorted-lorp l)
+    l
+    (checksort (move-smallest l))))
 
 
 ;; Write some tests
-............
+(check= (checksort nil) nil)
+(test? (implies (and (lorp l) (consp l) (endp (rest l))) (equal (checksort l) l)))
+(test? (implies (lorp l) (equal (len l) (len (checksort l)))))
+(test? (implies (lorp l) (sorted-lorp (checksort l))))
+(check= (checksort '(3 1 2 45 -10 3)) '(-10 1 2 3 3 45))#|ACL2s-ToDo-Line|#
 
+
+#|
 :logic
 
 #|
