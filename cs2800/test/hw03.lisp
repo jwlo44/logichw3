@@ -614,8 +614,7 @@ The input contract also follows the given signature for the function prompt in t
 (test? (implies (and (lorp l) (consp l) (endp (rest l))) (equal (checksort l) l)))
 (test? (implies (lorp l) (equal (len l) (len (checksort l)))))
 (test? (implies (lorp l) (sorted-lorp (checksort l))))
-(check= (checksort '(3 1 2 45 -10 3)) '(-10 1 2 3 3 45))#|ACL2s-ToDo-Line|#
-
+(check= (checksort '(3 1 2 45 -10 3)) '(-10 1 2 3 3 45))
 
 
 :logic
@@ -640,13 +639,16 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 
 ;; Tests
 ; note: it's ok if n is greater than (len l)
-(test? (implies (and (lorp l) (natp n) (< (len l) n)) (sorted-lorp (move-n-smallest l n))))
+(test? (implies (and (lorp l) (natp n) (<= (- (len l) 1) n)) (sorted-lorp (move-n-smallest l n))))
 (test? (implies (and (lorp l) (natp n) (equal 0 n)) (equal (move-n-smallest l n) l)))
 (test? (implies (and (lorp l) (natp n) (endp l)) (equal (move-n-smallest l n) l)))
 (test? (implies (and (lorp l) (natp n) (endp (rest l))) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n)) (equal (len l) (len (move-n-smallest l n)))))
+(check= (move-n-smallest '(4 5 1) 1) '(1 4 5))
+(check= (move-n-smallest '(4 5 1) 2) '(1 4 5))
+(check= (move-n-smallest '(6 5 1) 2) '(1 5 6))
+(check= (move-n-smallest '(6 5 1) 7) '(1 5 6))  
 
-  
-#|
 ;; 10. DEFINE
 ;; repeatsort : Lor -> Lor
 ;; repeatsort sorts the input list from least to greatest 
@@ -654,11 +656,23 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; What is the minimum number of calls to move-n-smallest necessary
 ;; to ensure a sorted list.
 (defunc repeatsort (l)
-  .........)
+  :input-contract (lorp l)
+  :output-contract (lorp (repeatsort l))
+  (if (endp l) l
+    (move-n-smallest l (- (len l) 1))))
 
 ;; Write some tests
-.........
+(test? (implies (lorp l) (sorted-lorp (repeatsort l))))
+(test? (implies (and (lorp l) (consp l) (endp (rest l))) (equal l (repeatsort l))))
+(test? (implies (and (lorp l) (sorted-lorp l)) (equal l (repeatsort l))))
+(test? (implies (lorp l) (equal (len l) (len (repeatsort l)))))
+(check= (repeatsort nil) nil)
+(check= (repeatsort '(1 3 2 5 1)) '(1 1 2 3 5))#|ACL2s-ToDo-Line|#
 
+
+
+
+#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Calculating Your Grade
 ;;
