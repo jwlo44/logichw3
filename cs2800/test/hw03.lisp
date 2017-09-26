@@ -792,14 +792,13 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 (test? (implies (and (grade-categoryp c) (equal (grade-category-num-counted c) 0))
                 (equal (get-category-grade c) 0)))
 (test? (implies (and (grade-categoryp c) (equal (len (grade-category-grades c)) 0))
-                (equal (get-category-grade c) 0)))#|ACL2s-ToDo-Line|#
-
+                (equal (get-category-grade c) 0)))
 
 ;; don't ask why this is necessary here; it's complicated
 :program
 
 ;; 9. DEFINE
-;; get-category-grade : gradebook -> lettergrade
+;; get-grade : gradebook -> lettergrade
 ;; returns the overall grade in class as a letter grade. For the purposes of this
 ;; assignment, assume that grades are assigned to the following ranges:
 ;; F: 0 <= _ < 50
@@ -815,9 +814,53 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; A-: 90 <= _ < 94
 ;; A: 94 <= _ <= 100
 ;; Please define constansts for the letter grade ranges
-(defunc get-grade (gb)
-    ...)
 
+(defunc get-letter-grade (num-grade) 
+    :input-contract (rationalp num-grade)
+    :output-contract (lettergradep (get-letter-grade num-grade))
+        (cond  ((>= num-grade 94) 'A)
+            ((>= num-grade 90) 'A-)
+            ((>= num-grade 87) 'B+)
+            ((>= num-grade 84) 'B)
+            ((>= num-grade 80) 'B-)
+            ((>= num-grade 77) 'C+)
+            ((>= num-grade 74) 'C)
+            ((>= num-grade 70) 'C-)
+            ((>= num-grade 65) 'D+)
+            ((>= num-grade 60) 'D)
+            ((>= num-grade 50) 'D-)
+            (T 'F)))
+
+(defunc get-grade (gb)
+  :input-contract (gradebookp gb)
+  :output-contract (lettergradep (get-grade gb))
+    (let ((num-grade (+ 
+     (* (get-category-grade (gradebook-assignments gb))
+        (grade-category-weight (gradebook-assignments gb)))
+     (+ (* (get-category-grade (gradebook-quizes gb)) 
+           (grade-category-weight (gradebook-quizes gb)))
+        (* (get-category-grade (gradebook-tests gb)) 
+           (grade-category-weight (gradebook-tests gb)))))))
+      (get-letter-grade num-grade)))
+
+
+      
+(defconst *cs28001* 
+  (gradebook (grade-category 'assignments 
+                             *pct-assignments* *num-assignments* *assignments-max*
+                             '())
+             (grade-category 'quizzes 
+                             *pct-quizzes* *num-quizzes* *quizzes-max*
+                             '())
+             (grade-category 'exams 
+                             *pct-exams* *num-exams* *exams-max*
+                             '())))
 
 ;; Write sufficient tests
-...........|#
+(check= (get-grade *cs2800*) 'D+)
+(check= (get-grade *cs28001*) 'F)
+(test? (implies (and (gradebookp gb) (equal (grade-category-num-counted (gradebook-assignments gb)) 0)
+                     (equal (grade-category-num-counted (gradebook-tests gb)) 0)
+                     (equal (grade-category-num-counted (gradebook-quizzes gb)) 0))
+                (equal (get-category-grade c) 'F)))#|ACL2s-ToDo-Line|#
+
