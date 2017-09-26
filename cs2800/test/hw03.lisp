@@ -489,15 +489,15 @@ them.
 
 ;; Write tests to check that it behaves the same way as permutation-list
 ;; Is there a way to get ACL2s to do most of the testing for you?
-(test? (implies (and (listp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))
-(test? (implies (and (listp ls) (endp ls)) (equal (permutation-list2 ls) t)))
-(test? (implies (and (listp ls) (consp ls) (permutation-list2 ls)) (check-all-lengths (len (first ls)) ls)))
+(test? (implies (and (listlistp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))
+(test? (implies (and (listlistp ls) (consp ls) (permutation-list2 ls)) (check-all-lengths (len (first ls)) ls)))
 (check= (permutation-list2 nil) t)
 (check= (permutation-list2 '(()()())) t)
 (check= (permutation-list2 '(()()(1))) nil)
 (check= (permutation-list2 '((1 1)(1)(1))) nil)
 (check= (permutation-list2 '((1 2 3)(2 3 1)(1 3 2))) t)
-(test? (implies (listp ls) (equal (permutation-list2 ls) (permutation-list ls))))
+;; below is how we would test same functionality between the two functions if we had defined permutation-list
+;;(test? (implies (listp ls) (equal (permutation-list2 ls) (permutation-list ls))))
 
 
 
@@ -580,6 +580,7 @@ The input contract also follows the given signature for the function prompt in t
 
 
 ;; sorted-lorp checks if a lor is sorted
+;; oh we missed the fact that orderedp was provided. whoops.
 (defunc sorted-lorp (l)
   :input-contract (lorp l)
   :output-contract (booleanp (sorted-lorp l))
