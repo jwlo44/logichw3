@@ -617,7 +617,7 @@ The input contract also follows the given signature for the function prompt in t
 (check= (checksort '(3 1 2 45 -10 3)) '(-10 1 2 3 3 45))#|ACL2s-ToDo-Line|#
 
 
-#|
+
 :logic
 
 #|
@@ -631,13 +631,22 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 ;; move-n-smallest : Lor x Nat -> Lor
 ;; move-n-smallest applies move-smallest to the list n times
 (defunc move-n-smallest (l n)
-   ...)
+  :input-contract (and (lorp l) (natp n))
+  :output-contract (lorp (move-n-smallest l n))
+  (if (equal 0 n) l
+    (move-n-smallest (move-smallest l) (- n 1))))
 
   
 
 ;; Tests
-............
+; note: it's ok if n is greater than (len l)
+(test? (implies (and (lorp l) (natp n) (< (len l) n)) (sorted-lorp (move-n-smallest l n))))
+(test? (implies (and (lorp l) (natp n) (equal 0 n)) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n) (endp l)) (equal (move-n-smallest l n) l)))
+(test? (implies (and (lorp l) (natp n) (endp (rest l))) (equal (move-n-smallest l n) l)))
 
+  
+#|
 ;; 10. DEFINE
 ;; repeatsort : Lor -> Lor
 ;; repeatsort sorts the input list from least to greatest 
