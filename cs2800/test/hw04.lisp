@@ -249,8 +249,7 @@ DNF: (~p /\ ~q /\ ~r) \/ (~p /\ q /\ ~r) \/ (p /\ q /\ r) \/ (~p /\ q /\ r) \/ (
                           (and
                               (implies (not p) q)
                               (or (and (not r) (not q)) (and r q)))
-                          (implies (not p) r)))))#|ACL2s-ToDo-Line|#
-
+                          (implies (not p) r)))))
                               
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -267,20 +266,56 @@ Transformations should take the form:
    ......
 
 (a) ~p = (q \/ p) /\ p 
-...
-
+= {((q \/ p) /\ p) = p, absorption}
+~p = p
+= {(~p = p) = false }
+f
+|#
+(test? (implies (and (booleanp q) (booleanp p)) (equal nil (equal (not p) (and p (or p q))))))
+#|
 (b) (p \/ r => ((q /\ ~r) => (r => ~r)))
-...
+= {((p => ~p) = ~p}
+(p \/ r => ((q /\ ~r) => ~r))
+= {((p /\ q) => q) = p}
+|#
+(test? (implies (and (booleanp p) (booleanp q)) (equal (implies (and p q) p) t)))
+#|
+
+(p \/ r => ~r)
+={ (p \/ q => ~q) = ~q}
+|#
+(test? (implies (and (booleanp p) (booleanp q)) (equal (implies (or p q) (not q)) (not q))))
+#|
+~r
+simplified
 
 (c) (p \/ q) /\ ((~p \/ q) /\ ~q))
+= {associativity}
+(p \/ q) /\ (~p \/ q) /\ ~q)
+={distributivity}
+(p \/ q) /\ (~p /\ ~q) \/ (q /\ ~q)
+= {de morgan}
+(p \/ q) /\ ~(p \/ q) \/ (q /\ ~q)
+= {p /\ ~p = false}
+(q /\ ~q)
+= {p /\ ~p = false}
+false
+|#
+(test? (implies (and (booleanp p) (booleanp q)) (equal nil (and (or p q) (and (not q) (or (not p) q))))))#|ACL2s-ToDo-Line|#
 
-...
-
-
+#|
 (d) (p = q) => ~(~p <> q)
 Note: (p = q) = ~(~p = q) can be considered a theorem if that's useful.
-
-...
+= {(~p <> q) = (p = q)}
+(p = q) => ~(p = q)
+= {(p => ~p) = ~p}
+~(p = q)
+simplified
+|#
+(test? (implies (and (booleanp q) (booleanp p)) 
+                (equal (not (equal p q)) 
+                       (implies (equal p q) (not (or (and (not q) (not p)) (and p q)))))))
+#|
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
