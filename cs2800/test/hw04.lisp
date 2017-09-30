@@ -439,16 +439,31 @@ regarding the existing code being admitted into ACL2s.
 (check= (add 'x '(x y)) '(x y))
 (check= (add 'x '(z y)) '(x z y))
 (check= (add 'x '()) '(x))
-(test? (implies (and (PXVarp a) (Lopvp X) (in a X)) (equal (add a X) X)))#|ACL2s-ToDo-Line|#
+(test? (implies (and (PXVarp a) (Lopvp X) (in a X)) (equal (add a X) X)))
 
 
-  #|
 ;; DEFINE
 ;; BinExp: All -> Boolean
 ;; A recognizer of binary propositional expressions.    
 (defunc BinExp (px)
- ........)
+  :input-contract t
+  :output-contract (booleanp (BinExp px))
+  (if (and (consp px) (consp (rest px)) (consp (rest (rest px))))
+    (and (BinaryOpp (first px)) 
+         (PropExp (second px)) 
+         (PropExp (third px)) 
+         (endp (rest (rest (rest px)))))
+    nil))
 
+(check= (BinExp 'x) nil)
+(check= (BinExp '(x x x)) nil)
+(check= (BinExp '(^ x x)) t)
+(check= (BinExp '(^ x (^ x x))) t)
+(test? (implies (and (BinaryOpp a) (PropExp b) (PropExp c)) (BinExp (list a b c))))#|ACL2s-ToDo-Line|#
+
+
+  #|
+  
 ;; DEFINE
 ;; UnaryExp: All -> Boolean
 ;; A recognizer of unary propositional expressions
