@@ -621,11 +621,8 @@ regarding the existing code being admitted into ACL2s.
 (test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
                      (beval bx1) (not (beval bx2))) (not (beval '(=> bx1 bx2)))))
 (test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
-                     (beval bx1) (not (beval bx2))) (beval '(=> bx2 bx1))))#|ACL2s-ToDo-Line|#
+                     (beval bx1) (not (beval bx2))) (beval '(=> bx2 bx1))))
 
-
-
-#|
 
 ;; Tests that may help you later (you can also write your own)
 (defconst *test_px1* '(v (~ a) (^ a c))) ;; Sat/Falsifiable
@@ -697,7 +694,14 @@ regarding the existing code being admitted into ACL2s.
 ;; always returns true. You must use pxSatp
 ;; to get credit.
 (defunc pxValidp (px)
-  .........)
+    :input-contract (PropExp px)
+    :output-contract (booleanp (pxValidp px))
+    (if (not (ConstBoolExp px))
+    (and (pxSatp px)
+         (pxValidp (updateFirstVar px t))
+         (pxValidp (updateFirstVar px nil)))
+    (beval px)))
+  
 
 
 (check= (pxValidp *test_px1*) nil)
@@ -707,7 +711,9 @@ regarding the existing code being admitted into ACL2s.
 
 
 ;; Add any additions tests you want here.
-.............
+(test? (implies (and (PropExp px) (ConstBoolExp px) (beval px)) (pxValidp px)))
+(test? (implies (and (PropExp px) (ConstBoolExp px) (not (beval px))) (not (pxValidp px))))
+(test? (implies (and (PropExp px) (not (pxSatp px))) (not (pxValidp px))))#|ACL2s-ToDo-Line|#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -779,4 +785,4 @@ the first element of the list is smaller than any other elements in the list.
 ...............
 
 |#
-  |#
+ 
