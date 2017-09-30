@@ -485,9 +485,7 @@ regarding the existing code being admitted into ACL2s.
 (check= (UnaryExp '(~ x)) t)
 (check= (UnaryExp '(~ x x)) nil)
 (check= (UnaryExp '(~ (^ x x))) t)
-(test? (implies (and (UnaryOpp a) (PropExp b)) (UnaryExp (list a b))))#|ACL2s-ToDo-Line|#
-
-  #|
+(test? (implies (and (UnaryOpp a) (PropExp b)) (UnaryExp (list a b))))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IMPROVE (Modify the input and ouput contracts to use different
@@ -497,17 +495,18 @@ regarding the existing code being admitted into ACL2s.
 ;; get-vars returns a list of variables appearing in px OR
 ;;   in the provided accumulator acc. If acc has
 ;;   no duplicates in it, then the returned list should not have
-;;   any duplicates either. See the check='s below.
+;;   any duplicates either. See the scheck='s below.
 ;; NOTICE: the way you traverse px for get-vars will be how you traverse
 ;; expressions in later functions you will write.
 (defunc get-vars (px acc)
-  :input-contract (and (PropExp px)(listp acc))
-  :output-contract (listp (get-vars px acc))
+  :input-contract (and (PropExp px) (Lopvp acc))
+  :output-contract (Lopvp (get-vars px acc))
   (cond ((booleanp px) acc)
         ((PXVarp px) (add px acc))
         ((UnaryExp px)(get-vars (second px) acc))
         (t (get-vars (third px)
-                     (get-vars (second px) acc)))))
+                     (get-vars (second px) acc)))))#|ACL2s-ToDo-Line|#
+
 
 (check= (PropExp '(v t (=> s q))) t)
 (check= (get-vars '(v r (=> s q)) nil) '(q s r))
@@ -554,7 +553,7 @@ regarding the existing code being admitted into ACL2s.
 ;; Use the template propex gives rise to, as per the lecture notes.
 ;; Look at get-vars (above).
 (defunc update (px name val)
-  :input-contract (and (PropExp px) (PXVarp name) (booleanp val))
+  :input-contract (and ((PropExp px) (PXVarp name) (booleanp val))
   :output-contract (Propexp (update px name val))
 .............)
 
