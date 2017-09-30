@@ -448,29 +448,47 @@ regarding the existing code being admitted into ACL2s.
 (defunc BinExp (px)
   :input-contract t
   :output-contract (booleanp (BinExp px))
-  (if (and (consp px) (consp (rest px)) (consp (rest (rest px))))
-    (and (BinaryOpp (first px)) 
-         (PropExp (second px)) 
-         (PropExp (third px)) 
-         (endp (rest (rest (rest px)))))
-    nil))
+  (and (listp px)
+       (consp px)
+       (consp (rest px)) 
+       (consp (rest (rest px)))
+       (endp (rest (rest (rest px))))
+       (BinaryOpp (first px)) 
+       (PropExp (second px))
+       (PropExp (third px))))
 
 (check= (BinExp 'x) nil)
 (check= (BinExp '(x x x)) nil)
 (check= (BinExp '(^ x x)) t)
+(check= (BinExp '(^ x x x)) nil)
 (check= (BinExp '(^ x (^ x x))) t)
-(test? (implies (and (BinaryOpp a) (PropExp b) (PropExp c)) (BinExp (list a b c))))#|ACL2s-ToDo-Line|#
+(test? (implies (and (BinaryOpp a) (PropExp b) (PropExp c)) (BinExp (list a b c))))
 
-
-  #|
   
 ;; DEFINE
 ;; UnaryExp: All -> Boolean
 ;; A recognizer of unary propositional expressions
 ;; For our example this is just lists '(~ PropEx)
 (defunc UnaryExp (px)
-  ..............)
+  :input-contract t
+  :output-contract (booleanp (UnaryExp px))
+  (and (listp px)
+       (consp px)
+       (consp (rest px)) 
+       (UnaryOpp (first px)) 
+       (PropExp (second px)) 
+       (endp (rest (rest px)))))
 
+
+(check= (UnaryExp 'x) nil)
+(check= (UnaryExp '(x x)) nil)
+(check= (UnaryExp '(~ x)) t)
+(check= (UnaryExp '(~ x x)) nil)
+(check= (UnaryExp '(~ (^ x x))) t)
+(test? (implies (and (UnaryOpp a) (PropExp b)) (UnaryExp (list a b))))#|ACL2s-ToDo-Line|#
+
+  #|
+  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IMPROVE (Modify the input and ouput contracts to use different
 ;;          recognizers. The function signature can change. 
