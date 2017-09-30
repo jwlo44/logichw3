@@ -301,8 +301,7 @@ simplified
 = {p /\ ~p = false}
 false
 |#
-(test? (implies (and (booleanp p) (booleanp q)) (equal nil (and (or p q) (and (not q) (or (not p) q))))))#|ACL2s-ToDo-Line|#
-
+(test? (implies (and (booleanp p) (booleanp q)) (equal nil (and (or p q) (and (not q) (or (not p) q))))))
 #|
 (d) (p = q) => ~(~p <> q)
 Note: (p = q) = ~(~p = q) can be considered a theorem if that's useful.
@@ -337,27 +336,85 @@ argument (for valid or unsatisfiable formulas) or by exhibiting
 assignments that show satisfiability or falsifiability.
 
 (A) ~p =  (p => (q => q))
-
-....
-
+={p => p = t}
+~p = (p => t)
+= {(p => t) = t}
+~p = t
+={(p = t) = p}
+~p
+simplified.
+truth table:
+p | ~p
+t | f
+f | t
+falsifiable, unsatisfiable
+|#
+(test? (implies (and (booleanp p) (booleanp q)) 
+                (equal (not p) 
+                       (equal (not p) (implies p (implies q q))))))
+#|
 (B) (p => q) = ~(q  \/ ~p)
+= {de morgan}
+(p => q) = (~q /\ p)
+truth table
+p | q | p => q | ~q /\ p | (p => q) = (~q /\ p)
+==|===|========|=========|=====================
+t | t | t      | f       | f
+f | t | t      | f       | f
+t | f | f      | t       | f
+f | f | t      | f       | f
 
-....
+falsifiable, unsatisfiable
+|#
+(test? (implies (and (booleanp p) (booleanp q))
+                (equal nil
+                       (equal (implies p q)
+                              (not (or q (not p)))))))
+#|
 
 (C) (false /\ p) \/ ~p => (p<>~p)
-
-....
+= {annihilator}
+false \/ ~p => (p <> ~p)
+= {identity }
+~p => (p <> ~p)
+= {(p <> ~p) = t}
+~p => t
+= {p => t = t}
+t
+simplified.
+satisfiable, valid
+|#
+(test? (implies (and (booleanp p) (booleanp q))
+                (equal t
+                       (implies 
+                         (or (and nil (not p))
+                             (not p))
+                         (or (and p (not (not p)))
+                             (and (not p) (not p)))))))#|ACL2s-ToDo-Line|#
+ 
+#|
 
 (D) [(~(p /\ q) \/ r) /\ (~p \/ ~q \/ ~r)] <> (p /\ q)
-
-....
+= {de morgan, associative}
+[(~p \/ ~q \/ r) /\ (~p \/ ~q \/ ~r)] <> (p /\ q)
+= {r and  ~r are in both sides of /\ so one side must be true
+e.g (p \/ q) /\ (p \/ ~q) = p}
+(~p \/ ~q) <> (p /\ q)
+={de MORGAN}
+~(p /\ q) <> (p /\ q)
+= {p <> ~p = t}
+t
+simplified.
 
 (E) ~(p => ~q \/ q)
-....
+= {(~p \/ p) = t}
+~(p => t)
+={(p => t) = t}
+~t
+false
+simplified.
+unsatisfiable, falsifiable
 
-|#
-
-#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 SECTION 4: Validity
 
