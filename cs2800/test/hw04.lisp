@@ -505,8 +505,7 @@ regarding the existing code being admitted into ACL2s.
         ((PXVarp px) (add px acc))
         ((UnaryExp px)(get-vars (second px) acc))
         (t (get-vars (third px)
-                     (get-vars (second px) acc)))))#|ACL2s-ToDo-Line|#
-
+                     (get-vars (second px) acc)))))
 
 (check= (PropExp '(v t (=> s q))) t)
 (check= (get-vars '(v r (=> s q)) nil) '(q s r))
@@ -553,15 +552,21 @@ regarding the existing code being admitted into ACL2s.
 ;; Use the template propex gives rise to, as per the lecture notes.
 ;; Look at get-vars (above).
 (defunc update (px name val)
-  :input-contract (and ((PropExp px) (PXVarp name) (booleanp val))
+  :input-contract (and (PropExp px) (PXVarp name) (booleanp val))
   :output-contract (Propexp (update px name val))
-.............)
-
+  (cond ((booleanp px) px)
+        ((PXVarp px) (if (equal name px) val px))
+        ((UnaryExp px)(list (first px) (update (second px) name val)))
+        (t (list (first px) (update (second px) name val)
+                 (update (third px) name val)))))
+           
 (check= (update T 'A NIL) T)
 (check= (update NIL 'A T) NIL)
 (check= (update 'A 'B T) 'A)
 (check= (update '(^ (v NIL A) (~ B)) 'A T) '(^ (v NIL T) (~ B)))
-;;Add additional tests
+(test? (implies (and (PropExp px) (PXVarp name) (booleanp val) (endp px)) 
+                (endp (update px name val))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GIVEN
@@ -585,11 +590,42 @@ regarding the existing code being admitted into ACL2s.
 (defunc beval (bx)
   :input-contract (PropExp bx)
   :output-contract (Booleanp (beval bx))
-  
+    (cond ((not (ConstBoolExp bx)) nil)
+          ((booleanp bx) bx)
+          ;((PXVarp bx) nil)
+          ((UnaryExp bx) (not (beval (second bx))))
+          (t (cond ((equal '^ (first bx)) (and (beval (second bx)) (beval (third bx))))
+                   ((equal 'v (first bx)) (or (beval (second bx)) (beval (third bx))))
+                   ((equal '=> (first bx)) (implies (beval (second bx)) (beval (third bx))))
+                   ((equal '<> (first bx)) (or (and (beval (second bx)) (not (beval (third bx))))
+                                               (and (not (beval (second bx))) (beval (third bx)))))
+                   (t nil)))))
 
-(check= (ConstBoolExp '(v (~ nil) (^ nil t))) t)
-(check= (ConstBoolExp '(v (~ a) (^ nil t))) nil)
+(check= (beval '(v (~ nil) (^ nil t))) t)
+(check= (beval '(v (~ a) (^ nil t))) nil)
+(check= (beval '(=> nil t)) t)
+(check= (beval '(v (~ nil) (<> nil t))) t)
+(check= (beval '(v (~ nil) (<> t nil))) t)
+(check= (beval '(<> nil nil)) nil)
+(check= (beval '(=> t nil)) nil)
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (beval '(^ bx1 bx2))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(^ bx2 bx2)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(v bx1 bx2)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(<> bx1 bx1)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (beval '(<> bx1 bx2))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(=> bx1 bx2)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (beval '(=> bx2 bx1))))#|ACL2s-ToDo-Line|#
 
+
+
+#|
 
 ;; Tests that may help you later (you can also write your own)
 (defconst *test_px1* '(v (~ a) (^ a c))) ;; Sat/Falsifiable
