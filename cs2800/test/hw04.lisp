@@ -56,6 +56,8 @@ The Beginner level is the next level after Bare Bones level.
 
 ; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
 ;$ACL2s-SMode$;Beginner
+
+
 #|
 CS 2800 Homework 4 - Fall 2017
 
@@ -85,7 +87,7 @@ If your group does not already exist:
    it will cost you points, so please read carefully.
 
 
-Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
+Names of ALL group members: Julia Wlochowski, Dylan Wight
 
 Note: There will be a 10 pt penalty if your names do not follow 
 this format.
@@ -207,16 +209,50 @@ Then decide whether the formula is satisfiable, unsatisfiable, valid, or
 falsifiable (more than one of these predicates will hold!). 
 
 a) (~p /\ q) = (q => p)
+p | q | (~p /\ q) | (q => p) | (~p /\ q) = (q => p)
+==|===|===========|==========|=====================
+t | t | f         | t        | f
+t | f | f         | t        | f
+f | t | t         | f        | f
+f | f | f         | t        | f
 
-
-
+This formula is falsifiable and unsatisfiable.
+|#
+(test? (implies (and (booleanp p) (booleanp q)) (equal nil (equal (and (not p) q) (implies q p)))))
+#|
 b) (~p => q) /\ (~r <> q) = (~p => r)  
 
 Hint: your table should have 8 or 11 columns (depending if you write
 the not columns including columns for p,q,r).
+p | q | r | (~p => q) | (~r <> q) | (~p => r) | (~p => q) /\ (~r <> q) | (~p => q) /\ (~r <> q) = (~p => r)
+==|===|===|===========|===========|===========|========================|===================================
+t | t | t | t         | t         | t         | t                      | t   
+t | f | t | t         | f         | t         | f                      | f
+f | t | t | t         | t         | t         | t                      | t
+f | f | t | f         | f         | t         | f                      | f
+t | t | f | t         | f         | t         | f                      | f 
+t | f | f | t         | t         | t         | t                      | t
+f | t | f | t         | f         | f         | f                      | t
+f | f | f | f         | t         | f         | f                      | t
 
+This formula is falsifiable and satisfiable.
+DNF: (~p /\ ~q /\ ~r) \/ (~p /\ q /\ ~r) \/ (p /\ q /\ r) \/ (~p /\ q /\ r) \/ (p /\ ~q /\ ~r)
+|#
+(test? (implies (and (booleanp q) (booleanp p) (booleanp r))
+                (equal 
+                      (or (and (not p) (not q) (not r))
+                          (and (not p) q (not r))
+                          (and p q r)
+                          (and (not p) q r)
+                          (and p (not q) (not r)))
+                      (equal 
+                          (and
+                              (implies (not p) q)
+                              (or (and (not r) (not q)) (and r q)))
+                          (implies (not p) r)))))#|ACL2s-ToDo-Line|#
 
-
+                              
+#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Section 2. Logic Rules
 Simplify the following expressions using propositional logic rules (give 
