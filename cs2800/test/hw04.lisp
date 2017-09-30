@@ -429,11 +429,23 @@ regarding the existing code being admitted into ACL2s.
 ;; X if and only if a is not in X
 ;; You can use the function in.
 (defunc add (a X)
-.............)
+  :input-contract (and (PXVarp a) (Lopvp X))
+  :output-contract (Lopvp (add a X))
+  (if (in a X)
+    X
+    (cons a X)))
 
+  
+(check= (add 'x '(x y)) '(x y))
+(check= (add 'x '(z y)) '(x z y))
+(check= (add 'x '()) '(x))
+(test? (implies (and (PXVarp a) (Lopvp X) (in a X)) (equal (add a X) X)))#|ACL2s-ToDo-Line|#
+
+
+  #|
 ;; DEFINE
 ;; BinExp: All -> Boolean
-;; A recognizer of binary propositional expressions.
+;; A recognizer of binary propositional expressions.    
 (defunc BinExp (px)
  ........)
 
@@ -699,3 +711,4 @@ the first element of the list is smaller than any other elements in the list.
 ...............
 
 |#
+  |#
