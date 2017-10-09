@@ -279,8 +279,7 @@ Useful function definitions used later
   :output-contract (listp (duplicate l))
   (if (endp l)
     nil
-    (cons (first l) (cons (first l) (duplicate (rest l))))))#|ACL2s-ToDo-Line|#
-
+    (cons (first l) (cons (first l) (duplicate (rest l))))))
  #|
 
 NOTE: I'm removing the let in the definition of min-l to 
@@ -432,7 +431,10 @@ You can assume theorem phi_rev_rev: (implies (listp x)(equal x (rev (rev x))))
 
 Contract checking
 (listp x)
+;; with the theorem:
+(implies (listp x) (equal (rev (delete e (rev x))) (delete e x))))
 
+Answer:
 Falsifiable
 ;; this test finds a counterexample sometimes
 (test? (implies (listp x) (equal (rev (delete e (rev x))) (delete e x))))
@@ -452,27 +454,46 @@ Falsifiable
 
 Contract checking 
 (listp l)
+;; with the theorem
+(implies (listp l) (in e (cons e (delete e l)))))
 
+Answer:
 Valid
-reasoning: in always returns true when looking for e in any (cons e list)
+
+reasoning:
+in always returns true when looking for e in any (cons e list)
+
+Step-by-Step Proof:
+
 (in e (cons e (delete e l)))
-={ Def in | ((a e) (l (cons e (delete e l)))) }
+={ Def in | ((a e) (l (cons e (delete e l)))) } ;; plugging into function body of in
+(implies (listp l)
 (if (endp (cons e (delete e l)))
     nil
     (or (equal e (first (cons e (delete e l))))
-        (in e (rest (cons (e (delete e l)))))))
-={if axiom, def. endp, cons axiom} ;; go to the second branch of the if because (endp (cons any list)) == nil
+        (in e (rest (cons (e (delete e l))))))))
+        
+={if axioms, def. def endp} ;; go to the second branch of the if because (endp (cons any list)) == nil
+ (implies (listp l)
  (or (equal e (first (cons e (delete e l))))
-     (in e (rest (cons (e (delete e l))))))) 
-={first-rest axiom} ;; (first (cons e list)) == e
- (or (equal e e)
-     (in e (rest (cons (e (delete e l))))))) 
+     (in e (rest (cons (e (delete e l))))))))
+     
+={first-rest axioms} ;; (first (cons e list)) == e
+(implies (listp l)
+(or (equal e e)
+    (in e (rest (cons (e (delete e l))))))))
+     
 ={propositional logic} ;; (or t boolean) == t
-  t
+(implies (listp l) t)
 
+t
+  
+  
+Tests:
 ;; this test has not found counterexamples so far
+|#
 (test? (implies (listp l) (in e (cons e (delete e l)))))
-
+#|
 
 
 
@@ -480,13 +501,70 @@ reasoning: in always returns true when looking for e in any (cons e list)
 
 4c. Phi_lendel: (len (delete e (cons e l)) = (len l)
 
-.............
+Contract completion
+(listp l)
+;; with the theorem:
+(implies (listp l) (equal (len (delete e (cons e l))) (len l)))
 
+Answer:
+Valid
+
+reasoning: (delete e (cons e l)) will return l
+
+Step-by-step Proof
+(implies (listp l) (equal (len (delete e (cons e l))) (len l)))
+= {Def. delete| ((e e) (l (cons e l)))} ;; plugging into delete
+(implies (listp l) 
+         (equal (len 
+                 (if (endp (cons e l))
+                   nil
+                   (if (equal e (first (cons e l)))
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+= {if axioms, def. endp} ;; take the second branch of the if because (endp (cons e l) == nil
+(implies (listp l) 
+         (equal (len 
+                   (if (equal e (first (cons e l)))
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+                
+={first-rest axioms} ;; (first (cons e l)) == e
+(implies (listp l) 
+         (equal (len 
+                   (if (equal e e)
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+={if axioms} ;; take the first branch of the if because (equal e e) == t
+(implies (listp l) 
+         (equal (len (rest (cons e l))
+                (len l)))
+                
+={first-rest axioms} ;; (rest (cons e l)) == l
+(implies (listp l) 
+         (equal (len l))
+                (len l)))
+t
+                
+                
+Tests:
+;; this test has not found counterexamples so far
+|#
+(test? (implies (listp l) (equal (len (delete e (cons e l))) (len l))))
+#|
 
 4d. Phi_del_min: (implies (and (lorp lr)(consp lr))(> (min-l (delete (min-l lr) lr)) (min-l lr)))
 or in other words, if you remove the minimum element in the list, the new minimum is larger
 
-...........
+Contract Completion:
+
+
+Answer:
+Falsifiable
+counterexample: a list with two fo the same minimum element
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 4e. (implies (equal (in a (rest l))
