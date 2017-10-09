@@ -87,6 +87,9 @@ If your group does not already exist:
 
 Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
 
+
+Dylan Wight, Julia Wlochowski
+
 Note: There will be a 10 pt penalty if your names do not follow 
 this format.
 
@@ -149,27 +152,27 @@ the two line format will make it easier for you to read.
           
 a. (rev2 (cons (app w y) z))|
    ((w (app b c)) (y (list a b)) (z (rev2 a)))
-  .............
+   *(rev2 (cons (app (app b c) (list a b)) (rev2 a)))
    
 b. (cons 'c d)|
    ((c (cons a (list d))) (d (cons c nil)))
-   ...........
+   *(cons 'c (cons c nil))
    
 c. (* (+ x (/ y (len z))) (+ (len z) y))
    ((x (+ a b)) (y (/ a b)) (z '(3 4)))
-   ..........
+   *(* (+ (+ a b) (/ (/ a b) (+ (len '(3 4)))) (/ a b)))
 
 d. (or (endp u) (listp (app u w)))
    ((u w) (w (list (first x))) )
-   ................
+   *(or (endp w) (lisp (app w (list (first x)))))
 
 e. (equal (+ (+ (len x) (len y)) (len z)) (len (cons 'z (app 'x y))))
    ((x '(5 6)) (y '(2 8)) (z '(17 3)))
-   .................
+   *(equal (+ (+ (len '(5 6)) (len (2 8))) (len '(17 3))) (len (cons 'z (app 'x (2 8)))))
 
 f. (cons u (app u w))|
    ((u (app w w))(w (app b a)) (w (app c d)))
-   .................
+   *Invalid, not allowed to have two  w on hte lst side of subsitutions 
    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Section 2: Finding a substitution, if it exists.
@@ -183,38 +186,41 @@ Again the * is just used to indicate the solution line.
 
 a. (app (list a) (rev2 b))
    (app (list (cons (list (first x)) x)) (rev2 (cons z (len2 (rest x)))))
-   .............
+   *((a (cons (list (first x)) x)) (b (cons z (len2 (rest x)))))
 
 b. (and (< (/ z w) (- x (+ x 2))) (> z x))
    (and (< (/ (unary-- (+ (- 5 6) 7)) x) (- (* x x) (+ (* x x) 2))) (> (unary-- (+ (- 5 6) 7)) (* x x)))
-   ....................
+   *((z (unary-- (+ (- 5 6) 7))) (w x) (x (* x x)))
 
 c. (app y z)
    (list 9 z)
-   .................
+   *None
 
 d. (in x y)
    (in y (app x)) 
-   .................
+   *((x y) (y (app x)))
    
 e. (app 'a (app b '(1 2 3)))
    (app x (app y '(1 2 3)))
-   .................
+   *None
 
 f. (app (list a b) a)
    (app (list c d) (cons c nil)))
-   .................
+   *None
   
 g. (app a (app (cons b c) b))
    (app '(1 2) (app (cons (cons b c) d) (cons b c)))
-   .................
+   *((a '(1 2)) (b (cons b c)) (c d))
 
 
-|#
 
-#|=================================== 
+#|
+
+
+================================ 
 Useful function definitions used later
 =====================================
+|#
 
 ;; listp is built in but for this assignment, assume it 
 ;; is defined this way
@@ -236,7 +242,7 @@ Useful function definitions used later
   (if (endp x)
     0
     (+ 1 (len (rest x)))))
-|#
+
 (defunc delete (e l)
   :input-contract (listp l)
   :output-contract (listp (delete e l))
@@ -245,7 +251,7 @@ Useful function definitions used later
     (if (equal e (first l))
       (rest l)
       (cons (first l)(delete e (rest l))))))
-#|
+
 (defunc in (a l)
   :input-contract (listp l)
   :output-contract (booleanp (in a l))
@@ -260,7 +266,6 @@ Useful function definitions used later
     x
     (app (rev (rest x))(list (first x)))))
      
-|#
 (defdata lor (listof rational))
 
 (defunc min-l (lr)
@@ -280,7 +285,6 @@ Useful function definitions used later
   (if (endp l)
     nil
     (cons (first l) (cons (first l) (duplicate (rest l))))))
- #|
 
 NOTE: I'm removing the let in the definition of min-l to 
 make using the body more obvious but a let would be equivalent.
@@ -302,32 +306,40 @@ EX: For a call to (app nil l) substitute nil and l in the definitional axiom of 
              (equal (app nil l) (if (endp nil) l (cons (first nil)(app (rest nil) l)))))
     
     Notice the above definitional axiom for app has the input contract for app as it's left hand side.
-    This needs to be included in an instantiation.  Think about why that is.  
+    This needs to be included in an instantiation.  Think about why that is.
 
 3a. Theorem phi_rev-rev is (implies (listp x)(equal (rev (rev x)) x))
     Instantiate phi_rev-rev with (app x y).
-    = {Theorem phi_rev-rev |  (x (app x y))}
-    (implies (listp (app x y)(equal (rev (rev (app x y)) (app x y))
+    = {Theorem of phi_rev-rev|((x (app x y)))}
+    (implies (list (app x y))(equal (rev (rev (app x y))) (app x y)))
 
 3b. Theorem phi_rev-rev is (implies (listp x)(equal (rev (rev x)) x))
     Instantiate phi_rev-rev with 4 for x. Is this a theorem?  Why?
     (this is not a retorical question)
+     = {Theorem of phi_rev-rev|((x 4))}
+      (implies (listp 4)(equal (rev (rev 4)) 4))
+      
     Yes. It is a theorem because it is always true. 4 is not a list, so the left hand side of the implies is false, meaning the implies is true.
-    ..............
 
 3c. Theorem phi_min-newmin (discussed in class) is: 
     (implies (and (lorp lr)(consp lr))
              (equal (- (min-l lr) 1)(min-l (cons (- (min-l lr) 1) lr))))
     Instantiate phi_min-newmin with a list '(3 2 1)
-    
-    ...............
+    = {Theorem of phi_min-newmin|((lr '(3 2 1)))}
+    (implies (and (lorp '(3 2 1))(consp '(3 2 1)))
+             (equal (- (min-l '(3 2 1)) 1)(min-l (cons (- (min-l '(3 2 1)) 1) '(3 2 1)))))
     
 3d. Instantiate the definitional axiom of delete with the element 'a being deleted from
-    list '(1 3 a c): 
+    list '(1 3 a c):
+    = {Def of delete|((e 'a)(l '(1 3 a c)))}
+    (implies (listp '(1 3 a c))
+             (if (endp '(1 3 a c))
+               nil
+               (if (equal 'a (first '(1 3 a c)))
+                 (rest '(1 3 a c))
+                 (cons (first '(1 3 a c))(delete 'a (rest '(1 3 a c)))))))
     
-    ...............
 |#
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SECTION 4: INTRODUCTION TO EQUATIONAL REASONING
@@ -346,6 +358,7 @@ not required to do so.
 
 Here are some notes about equational proofs although additional information
 can be found in the course notes 
+(http://www.ccs.neu.edu/course/cs2800f17/rapeq.pdf). Remember the key
 consideration when grading your proofs will be how well you communicate 
 your ideas and justifications:
 
@@ -450,6 +463,7 @@ Falsifiable
 
 
 
+
 4b. Phi_in_cons: (in e (cons e (delete e l)))
 
 Contract checking 
@@ -494,6 +508,7 @@ Tests:
 |#
 (test? (implies (listp l) (in e (cons e (delete e l)))))
 #|
+
 
 
 
@@ -554,6 +569,7 @@ Tests:
 |#
 (test? (implies (listp l) (equal (len (delete e (cons e l))) (len l))))
 #|
+
 
 4d. Phi_del_min: (implies (and (lorp lr)(consp lr))(> (min-l (delete (min-l lr) lr)) (min-l lr)))
 or in other words, if you remove the minimum element in the list, the new minimum is larger
@@ -708,6 +724,7 @@ Tests:
     nil
     (or (equal a (first l)) (in a (rest l)))))
 |#
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Feedback (10 points)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -722,7 +739,7 @@ Please fill out the following form.
 
 https://goo.gl/forms/tHdzkGWjwblW5gvE3
 
-We do not keep track of who submitted what, so please be honest. Each
+We do not keep track of who submitted what, so please be honest.h
 individual student should fill out the form, e.g., if there are two
 people on a team, then each of these people should fill out the form.
 Only fill out the provided survey once since we can't identify multiple 
