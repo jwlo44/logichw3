@@ -212,11 +212,11 @@ g. (app a (app (cons b c) b))
    *((a '(1 2)) (b (cons b c)) (c d))
 
 
-|#
 
 #|=================================== 
 Useful function definitions used later
 =====================================
+|#
 
 ;; listp is built in but for this assignment, assume it 
 ;; is defined this way
@@ -283,7 +283,6 @@ Useful function definitions used later
     nil
     (cons (first l) (cons (first l) (duplicate (rest l))))))
  
-
 NOTE: I'm removing the let in the definition of min-l to 
 make using the body more obvious but a let would be equivalent.
 
@@ -304,30 +303,41 @@ EX: For a call to (app nil l) substitute nil and l in the definitional axiom of 
              (equal (app nil l) (if (endp nil) l (cons (first nil)(app (rest nil) l)))))
     
     Notice the above definitional axiom for app has the input contract for app as it's left hand side.
-    This needs to be included in an instantiation.  Think about why that is.  
+    This needs to be included in an instantiation.  Think about why that is.
 
 3a. Theorem phi_rev-rev is (implies (listp x)(equal (rev (rev x)) x))
     Instantiate phi_rev-rev with (app x y).
-    ..........
+    = {Theorem of phi_rev-rev|((x (app x y)))}
+    (implies (list (app x y))(equal (rev (rev (app x y))) (app x y)))
 
 3b. Theorem phi_rev-rev is (implies (listp x)(equal (rev (rev x)) x))
     Instantiate phi_rev-rev with 4 for x. Is this a theorem?  Why?
     (this is not a retorical question)
-    ..............
+     = {Theorem of phi_rev-rev|((x 4))}
+      (implies (listp 4)(equal (rev (rev 4)) 4))
+      
+      I would describe it as a corollary not a therem, because it is a statement that relies on the 
+      theorem to be true.
 
 3c. Theorem phi_min-newmin (discussed in class) is: 
     (implies (and (lorp lr)(consp lr))
              (equal (- (min-l lr) 1)(min-l (cons (- (min-l lr) 1) lr))))
     Instantiate phi_min-newmin with a list '(3 2 1)
-    
-    ...............
+    = {Theorem of phi_min-newmin|((lr '(3 2 1)))}
+    (implies (and (lorp '(3 2 1))(consp '(3 2 1)))
+             (equal (- (min-l '(3 2 1)) 1)(min-l (cons (- (min-l '(3 2 1)) 1) '(3 2 1)))))
     
 3d. Instantiate the definitional axiom of delete with the element 'a being deleted from
-    list '(1 3 a c): 
+    list '(1 3 a c):
+    = {Def of delete|((e 'a)(l '(1 3 a c)))}
+    (implies (listp '(1 3 a c))
+             (if (endp '(1 3 a c))
+               nil
+               (if (equal 'a (first '(1 3 a c)))
+                 (rest '(1 3 a c))
+                 (cons (first '(1 3 a c))(delete 'a (rest '(1 3 a c)))))))
     
-    ...............
 |#
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SECTION 4: INTRODUCTION TO EQUATIONAL REASONING
