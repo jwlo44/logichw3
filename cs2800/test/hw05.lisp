@@ -171,7 +171,7 @@ e. (equal (+ (+ (len x) (len y)) (len z)) (len (cons 'z (app 'x y))))
 
 f. (cons u (app u w))|
    ((u (app w w))(w (app b a)) (w (app c d)))
-   * Invalid, not allowed to have two  w on hte lst side of subsitutions 
+   *Invalid, not allowed to have two  w on hte lst side of subsitutions 
    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Section 2: Finding a substitution, if it exists.
@@ -185,31 +185,31 @@ Again the * is just used to indicate the solution line.
 
 a. (app (list a) (rev2 b))
    (app (list (cons (list (first x)) x)) (rev2 (cons z (len2 (rest x)))))
-   .............
+   *((a (cons (list (first x)) x)) (b (cons z (len2 (rest x)))))
 
 b. (and (< (/ z w) (- x (+ x 2))) (> z x))
    (and (< (/ (unary-- (+ (- 5 6) 7)) x) (- (* x x) (+ (* x x) 2))) (> (unary-- (+ (- 5 6) 7)) (* x x)))
-   ....................
+   *((z (unary-- (+ (- 5 6) 7))) (w x) (x (* x x)))
 
 c. (app y z)
    (list 9 z)
-   .................
+   *None
 
 d. (in x y)
    (in y (app x)) 
-   .................
+   *((x y) (y (app x)))
    
 e. (app 'a (app b '(1 2 3)))
    (app x (app y '(1 2 3)))
-   .................
+   *None
 
 f. (app (list a b) a)
    (app (list c d) (cons c nil)))
-   .................
+   *None
   
 g. (app a (app (cons b c) b))
    (app '(1 2) (app (cons (cons b c) d) (cons b c)))
-   .................
+   *((a '(1 2)) (b (cons b c)) (c d))
 
 
 |#
