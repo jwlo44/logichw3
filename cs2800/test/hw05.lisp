@@ -87,6 +87,7 @@ If your group does not already exist:
 
 Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
 
+
 Dylan Wight, Julia Wlochowski
 
 Note: There will be a 10 pt penalty if your names do not follow 
@@ -213,7 +214,10 @@ g. (app a (app (cons b c) b))
 
 
 
-#|=================================== 
+#|
+
+
+================================ 
 Useful function definitions used later
 =====================================
 |#
@@ -262,7 +266,6 @@ Useful function definitions used later
     x
     (app (rev (rest x))(list (first x)))))
      
-
 (defdata lor (listof rational))
 
 (defunc min-l (lr)
@@ -282,7 +285,7 @@ Useful function definitions used later
   (if (endp l)
     nil
     (cons (first l) (cons (first l) (duplicate (rest l))))))
- 
+
 NOTE: I'm removing the let in the definition of min-l to 
 make using the body more obvious but a let would be equivalent.
 
@@ -316,8 +319,7 @@ EX: For a call to (app nil l) substitute nil and l in the definitional axiom of 
      = {Theorem of phi_rev-rev|((x 4))}
       (implies (listp 4)(equal (rev (rev 4)) 4))
       
-      I would describe it as a corollary not a therem, because it is a statement that relies on the 
-      theorem to be true.
+    Yes. It is a theorem because it is always true. 4 is not a list, so the left hand side of the implies is false, meaning the implies is true.
 
 3c. Theorem phi_min-newmin (discussed in class) is: 
     (implies (and (lorp lr)(consp lr))
@@ -439,26 +441,160 @@ For each of the conjectures in section 4:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 4a. Phi_rev_del: (rev (delete e (rev x))) = (delete e x)
 You can assume theorem phi_rev_rev: (implies (listp x)(equal x (rev (rev x))))
-..................
+
+Contract checking
+(listp x)
+;; with the theorem:
+(implies (listp x) (equal (rev (delete e (rev x))) (delete e x))))
+
+Answer:
+Falsifiable
+;; this test finds a counterexample sometimes
+(test? (implies (listp x) (equal (rev (delete e (rev x))) (delete e x))))
+;; you can make a counterexample using a list that has more than one instance of e and at least one value that isn't e
+|#
+;; Counterexample
+(let ((e 1)
+      (x '(1 2 1)))
+  (not (equal 
+        (rev (delete e (rev x))) ;; '(1 2)
+        (delete e x)))) ;; '(2 1)
+#|
+
 
 
 
 4b. Phi_in_cons: (in e (cons e (delete e l)))
 
-.............
+Contract checking 
+(listp l)
+;; with the theorem
+(implies (listp l) (in e (cons e (delete e l)))))
+
+Answer:
+Valid
+
+reasoning:
+in always returns true when looking for e in any (cons e list)
+
+Step-by-Step Proof:
+
+(in e (cons e (delete e l)))
+={ Def in | ((a e) (l (cons e (delete e l)))) } ;; plugging into function body of in
+(implies (listp l)
+(if (endp (cons e (delete e l)))
+    nil
+    (or (equal e (first (cons e (delete e l))))
+        (in e (rest (cons (e (delete e l))))))))
+        
+={if axioms, def. def endp} ;; go to the second branch of the if because (endp (cons any list)) == nil
+ (implies (listp l)
+ (or (equal e (first (cons e (delete e l))))
+     (in e (rest (cons (e (delete e l))))))))
+     
+={first-rest axioms} ;; (first (cons e list)) == e
+(implies (listp l)
+(or (equal e e)
+    (in e (rest (cons (e (delete e l))))))))
+     
+={propositional logic} ;; (or t boolean) == t
+(implies (listp l) t)
+
+t
+  
+  
+Tests:
+;; this test has not found counterexamples so far
+|#
+(test? (implies (listp l) (in e (cons e (delete e l)))))
+#|
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 4c. Phi_lendel: (len (delete e (cons e l)) = (len l)
 
-.............
+Contract completion
+(listp l)
+;; with the theorem:
+(implies (listp l) (equal (len (delete e (cons e l))) (len l)))
+
+Answer:
+Valid
+
+reasoning: (delete e (cons e l)) will return l
+
+Step-by-step Proof
+(implies (listp l) (equal (len (delete e (cons e l))) (len l)))
+= {Def. delete| ((e e) (l (cons e l)))} ;; plugging into delete
+(implies (listp l) 
+         (equal (len 
+                 (if (endp (cons e l))
+                   nil
+                   (if (equal e (first (cons e l)))
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+= {if axioms, def. endp} ;; take the second branch of the if because (endp (cons e l) == nil
+(implies (listp l) 
+         (equal (len 
+                   (if (equal e (first (cons e l)))
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+                
+={first-rest axioms} ;; (first (cons e l)) == e
+(implies (listp l) 
+         (equal (len 
+                   (if (equal e e)
+                     (rest (cons e l))
+                     (cons (first (cons e l))(delete e (rest (cons e l))))))) 
+                (len l)))
+={if axioms} ;; take the first branch of the if because (equal e e) == t
+(implies (listp l) 
+         (equal (len (rest (cons e l))
+                (len l)))
+                
+={first-rest axioms} ;; (rest (cons e l)) == l
+(implies (listp l) 
+         (equal (len l))
+                (len l)))
+t
+                
+                
+Tests:
+;; this test has not found counterexamples so far
+|#
+(test? (implies (listp l) (equal (len (delete e (cons e l))) (len l))))
+#|
 
 
 4d. Phi_del_min: (implies (and (lorp lr)(consp lr))(> (min-l (delete (min-l lr) lr)) (min-l lr)))
 or in other words, if you remove the minimum element in the list, the new minimum is larger
 
-...........
+Contract Completion:
+in order to call (min-l (delete (min-l lr ) lr))), lr has to be at least length 2
+(and (lorp lr)(consp lr)(consp (rest lr)))
+;; exported into theorem
+(implies (and (lorp lr)(consp lr) (consp (rest lr)))(> (min-l (delete (min-l lr) lr)) (min-l lr)))
+
+Answer:
+Falsifiable
+counterexample: a list with two of the same minimum element
+|#
+(let* ((min 1)
+      (lr (list min min)))
+  (not (> (min-l (delete (min-l lr) lr))
+          (min-l lr))))#|ACL2s-ToDo-Line|#
+
+#|
+Tests:
+;; this test finds counterexamples sometimes
+(test? (implies (and (lorp lr)(consp lr)(consp (rest lr)))(> (min-l (delete (min-l lr) lr)) (min-l lr))))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 4e. (implies (equal (in a (rest l))
@@ -466,10 +602,128 @@ or in other words, if you remove the minimum element in the list, the new minimu
              (equal (in a l)
                     (in a (duplicate l))))
 
- .............
+in other words, duplicating the list doesn't change the result of in.
+                    
+                    
+Contract Completion
+(and (listp l) (consp l))
+
+;; exported into theorem
+(implies
+ ;; lhs of implies
+ (and (listp l) (consp l)
+              (equal (in a (rest l))
+                     (in a (duplicate (rest l)))))
+ ;; rhs of implies
+ (equal (in a l)
+        (in a (duplicate l))))                   
+
+Answer:
+Valid
+
+(implies
+ (and (listp l) (consp l)
+              (equal (in a (rest l))
+                     (in a (duplicate (rest l)))))
+ (equal (in a l)
+        (in a (duplicate l))))  
+
+
+Reasoning: 
+little helper theorem:
+(implies (listp l) (equal (in a l) (in a (duplicate l))))
+lhs and rhs of implies are instantiations of little helper theorem
+
+Step-By-Step Proof for Little Helper Theorem
+(implies (listp l) (equal (in a l) (in a (duplicate l))))
+
+ Case 1:  (consp l)
+ 
+ Prove
+(equal (in a l) (in a (duplicate l)))
+ 
+={Def. Duplicate | (l l)}
+(equal (in a l)
+(in a  (if (endp l)
+            nil
+            (cons (first l) (cons (first l) (duplicate (rest l))))))
+
+={Context 2, if axioms} ;; take second branch of if because (consp l)
+(equal (in a l)
+(in a (cons (first l) (cons (first l) (duplicate (rest l)))))
+
+={Def. in | (a a) (l (cons (first l) (cons (first l) (duplicate (rest l)))))}
+(equal (in a l)
+(if (endp (cons (first l) (cons (first l) (duplicate (rest l)))
+    nil
+    (or (equal a (first (cons (first l) (cons (first l) (duplicate (rest l)))) (in a (rest (cons (first l) (cons (first l) (duplicate (rest l)))))))
+
+={if axioms, endp}
+(equal (in a l)
+(or (equal a (first (cons (first l) (cons (first l) (duplicate (rest l))))
+             (in a (rest (cons (first l) (cons (first l) (duplicate (rest l)))))))
+ ;; magical parens
+ 
+ ={firs-rest axioms}
+(equal (in a l)
+(or (equal a (first l))
+             (in a (cons (first l) (duplicate (rest l)))))
+
+={Prop. Logic, Definition of in} ;; q \/ q \/ r == q\/r
+(equal (in a l)
+(in a (cons (first l) (duplicate (rest l))))
+
+;; ok so we just proved that (in a (duplicate l)) == (in a (cons (first l) (duplicate (rest l))))
+;; so (in a (cons (first l) (duplicate (rest l)))) should equal (in a l) by recursion using the definition of duplicate and in.
+= t
+
+Case 2. (endp l)
+={Def. Duplicate | (l nil)}
+(equal (in a nil)
+(in a  (if (endp nil)
+            nil
+            (cons (first nil) (cons (first nil) (duplicate (rest nil))))))
+={if axiom, endp}
+(equal (in a nil)
+(in a  nil)
+= t
+
+
+Step By Step Proof for Theorem
+={propositional logic} ;; theorems are always true, t => t == t
+t
+
+        
+Tests:
+;; this test has not found any counterexamples so far
 |#
+(test? (implies
+        (and (listp l) (consp l)
+             (equal (in a (rest l))
+                    (in a (duplicate (rest l)))))
+        (equal (in a l)
+               (in a (duplicate l))))) 
 
-
+(test? (implies (listp l)
+                (equal (in a l)
+                       (in a (duplicate l))))) 
+#|
+        
+        
+     (defunc duplicate (l)
+  :input-contract (listp l)
+  :output-contract (listp (duplicate l))
+  (if (endp l)
+    nil
+    (cons (first l) (cons (first l) (duplicate (rest l))))))   
+    
+    (defunc in (a l)
+  :input-contract (listp l)
+  :output-contract (booleanp (in a l))
+  (if (endp l)
+    nil
+    (or (equal a (first l)) (in a (rest l)))))
+|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Feedback (10 points)
@@ -485,7 +739,7 @@ Please fill out the following form.
 
 https://goo.gl/forms/tHdzkGWjwblW5gvE3
 
-We do not keep track of who submitted what, so please be honest. Each
+We do not keep track of who submitted what, so please be honest.h
 individual student should fill out the form, e.g., if there are two
 people on a team, then each of these people should fill out the form.
 Only fill out the provided survey once since we can't identify multiple 
@@ -503,7 +757,7 @@ give everyone else the points.
 The following team members filled out the feedback survey provided in 
 the link above:
 ---------------------------------------------
+Julia Wlochowski
 Dylan Wight
-<firstname> <LastName>
 
 |#
