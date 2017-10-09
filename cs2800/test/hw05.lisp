@@ -559,11 +559,25 @@ Tests:
 or in other words, if you remove the minimum element in the list, the new minimum is larger
 
 Contract Completion:
-
+in order to call (min-l (delete (min-l lr ) lr))), lr has to be at least length 2
+(and (lorp lr)(consp lr)(consp (rest lr)))
+;; exported into theorem
+(implies (and (lorp lr)(consp lr) (consp (rest lr)))(> (min-l (delete (min-l lr) lr)) (min-l lr)))
 
 Answer:
 Falsifiable
-counterexample: a list with two fo the same minimum element
+counterexample: a list with two of the same minimum element
+|#
+(let* ((min 1)
+      (lr (list min min)))
+  (not (> (min-l (delete (min-l lr) lr))
+          (min-l lr))))#|ACL2s-ToDo-Line|#
+
+#|
+Tests:
+;; this test finds counterexamples sometimes
+(test? (implies (and (lorp lr)(consp lr)(consp (rest lr)))(> (min-l (delete (min-l lr) lr)) (min-l lr))))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -572,11 +586,128 @@ counterexample: a list with two fo the same minimum element
              (equal (in a l)
                     (in a (duplicate l))))
 
- .............
+in other words, duplicating the list doesn't change the result of in.
+                    
+                    
+Contract Completion
+(and (listp l) (consp l))
+
+;; exported into theorem
+(implies
+ ;; lhs of implies
+ (and (listp l) (consp l)
+              (equal (in a (rest l))
+                     (in a (duplicate (rest l)))))
+ ;; rhs of implies
+ (equal (in a l)
+        (in a (duplicate l))))                   
+
+Answer:
+Valid
+
+(implies
+ (and (listp l) (consp l)
+              (equal (in a (rest l))
+                     (in a (duplicate (rest l)))))
+ (equal (in a l)
+        (in a (duplicate l))))  
+
+
+Reasoning: 
+little helper theorem:
+(implies (listp l) (equal (in a l) (in a (duplicate l))))
+lhs and rhs of implies are instantiations of little helper theorem
+
+Step-By-Step Proof for Little Helper Theorem
+(implies (listp l) (equal (in a l) (in a (duplicate l))))
+
+ Case 1:  (consp l)
+ 
+ Prove
+(equal (in a l) (in a (duplicate l)))
+ 
+={Def. Duplicate | (l l)}
+(equal (in a l)
+(in a  (if (endp l)
+            nil
+            (cons (first l) (cons (first l) (duplicate (rest l))))))
+
+={Context 2, if axioms} ;; take second branch of if because (consp l)
+(equal (in a l)
+(in a (cons (first l) (cons (first l) (duplicate (rest l)))))
+
+={Def. in | (a a) (l (cons (first l) (cons (first l) (duplicate (rest l)))))}
+(equal (in a l)
+(if (endp (cons (first l) (cons (first l) (duplicate (rest l)))
+    nil
+    (or (equal a (first (cons (first l) (cons (first l) (duplicate (rest l)))) (in a (rest (cons (first l) (cons (first l) (duplicate (rest l)))))))
+
+={if axioms, endp}
+(equal (in a l)
+(or (equal a (first (cons (first l) (cons (first l) (duplicate (rest l))))
+             (in a (rest (cons (first l) (cons (first l) (duplicate (rest l)))))))
+ ;; magical parens
+ 
+ ={firs-rest axioms}
+(equal (in a l)
+(or (equal a (first l))
+             (in a (cons (first l) (duplicate (rest l)))))
+
+={Prop. Logic, Definition of in} ;; q \/ q \/ r == q\/r
+(equal (in a l)
+(in a (cons (first l) (duplicate (rest l))))
+
+;; ok so we just proved that (in a (duplicate l)) == (in a (cons (first l) (duplicate (rest l))))
+;; so (in a (cons (first l) (duplicate (rest l)))) should equal (in a l) by recursion using the definition of duplicate and in.
+= t
+
+Case 2. (endp l)
+={Def. Duplicate | (l nil)}
+(equal (in a nil)
+(in a  (if (endp nil)
+            nil
+            (cons (first nil) (cons (first nil) (duplicate (rest nil))))))
+={if axiom, endp}
+(equal (in a nil)
+(in a  nil)
+= t
+
+
+Step By Step Proof for Theorem
+={propositional logic} ;; theorems are always true, t => t == t
+t
+
+        
+Tests:
+;; this test has not found any counterexamples so far
 |#
+(test? (implies
+        (and (listp l) (consp l)
+             (equal (in a (rest l))
+                    (in a (duplicate (rest l)))))
+        (equal (in a l)
+               (in a (duplicate l))))) 
 
-
-
+(test? (implies (listp l)
+                (equal (in a l)
+                       (in a (duplicate l))))) 
+#|
+        
+        
+     (defunc duplicate (l)
+  :input-contract (listp l)
+  :output-contract (listp (duplicate l))
+  (if (endp l)
+    nil
+    (cons (first l) (cons (first l) (duplicate (rest l))))))   
+    
+    (defunc in (a l)
+  :input-contract (listp l)
+  :output-contract (booleanp (in a l))
+  (if (endp l)
+    nil
+    (or (equal a (first l)) (in a (rest l)))))
+|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Feedback (10 points)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -609,7 +740,7 @@ give everyone else the points.
 The following team members filled out the feedback survey provided in 
 the link above:
 ---------------------------------------------
-<firstname> <LastName>
-<firstname> <LastName>
+Julia Wlochowski
+Dylan Wight
 
 |#
