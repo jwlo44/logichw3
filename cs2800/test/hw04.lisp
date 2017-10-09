@@ -56,8 +56,6 @@ The Beginner level is the next level after Bare Bones level.
 
 ; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
 ;$ACL2s-SMode$;Beginner
-
-
 #|
 CS 2800 Homework 4 - Fall 2017
 
@@ -273,21 +271,25 @@ f
 |#
 (test? (implies (and (booleanp q) (booleanp p)) (equal nil (equal (not p) (and p (or p q))))))
 #|
+
 (b) (p \/ r => ((q /\ ~r) => (r => ~r)))
 = {((p => ~p) = ~p}
 (p \/ r => ((q /\ ~r) => ~r))
-= {((p /\ q) => q) = p}
+= {definition of implies, q => p = ~q \/ p}
+~(p \/ r) \/ (~( q /\ ~r) \/ ~r)
+= {de morgan}
+~(p \/ r) \/ (~q \/ r) \/ ~ r
+= {associative}
+~(p \/ r) \/ ~q \/ r \/ ~r
+= {p \/ ~p = t}
+t
 |#
-(test? (implies (and (booleanp p) (booleanp q)) (equal (implies (and p q) p) t)))
+(test? (implies (and (booleanp p) (booleanp q) (booleanp r))
+                (equal (implies (or p r)
+                                (implies (and q (not r))
+                                         (implies r (not r))))
+                       t)))
 #|
-
-(p \/ r => ~r)
-={ (p \/ q => ~q) = ~q}
-|#
-(test? (implies (and (booleanp p) (booleanp q)) (equal (implies (or p q) (not q)) (not q))))
-#|
-~r
-simplified
 
 (c) (p \/ q) /\ ((~p \/ q) /\ ~q))
 = {associativity}
@@ -390,8 +392,7 @@ satisfiable, valid
                          (or (and nil (not p))
                              (not p))
                          (or (and p (not (not p)))
-                             (and (not p) (not p)))))))#|ACL2s-ToDo-Line|#
- 
+                             (and (not p) (not p))))))) 
 #|
 
 (D) [(~(p /\ q) \/ r) /\ (~p \/ ~q \/ ~r)] <> (p /\ q)
@@ -557,21 +558,68 @@ regarding the existing code being admitted into ACL2s.
 ;; X if and only if a is not in X
 ;; You can use the function in.
 (defunc add (a X)
-.............)
+  :input-contract (and (PXVarp a) (Lopvp X))
+  :output-contract (Lopvp (add a X))
+  (if (in a X)
+    X
+    (cons a X)))
+
+  
+(check= (add 'x '(x y)) '(x y))
+(check= (add 'x '(z y)) '(x z y))
+(check= (add 'x '()) '(x))
+(test? (implies (and (PXVarp a) (Lopvp X) (in a X)) (equal (add a X) X)))
+(test? (implies (and (PXVarp a) (Lopvp X) (not (in a X))) (equal (len (add a X)) (+ 1 (len X)))))
+
 
 ;; DEFINE
 ;; BinExp: All -> Boolean
-;; A recognizer of binary propositional expressions.
+;; A recognizer of binary propositional expressions.    
 (defunc BinExp (px)
- ........)
+  :input-contract t
+  :output-contract (booleanp (BinExp px))
+  (and (listp px)
+       (consp px)
+       (consp (rest px)) 
+       (consp (rest (rest px)))
+       (endp (rest (rest (rest px))))
+       (BinaryOpp (first px)) 
+       (PropExp (second px))
+       (PropExp (third px))))
 
+(check= (BinExp 'x) nil)
+(check= (BinExp '(x x x)) nil)
+(check= (BinExp '(^ x x)) t)
+(check= (BinExp '(^ x x x)) nil)
+(check= (BinExp '(^ x (^ x x))) t)
+(test? (implies (and (BinaryOpp a) (PropExp b) (PropExp c)) (BinExp (list a b c))))
+
+  
 ;; DEFINE
 ;; UnaryExp: All -> Boolean
 ;; A recognizer of unary propositional expressions
 ;; For our example this is just lists '(~ PropEx)
 (defunc UnaryExp (px)
-  ..............)
+  :input-contract t
+  :output-contract (booleanp (UnaryExp px))
+  (and (listp px)
+       (consp px)
+       (consp (rest px)) 
+       (UnaryOpp (first px)) 
+       (PropExp (second px)) 
+       (endp (rest (rest px)))))
 
+
+(check= (UnaryExp 'x) nil)
+(check= (UnaryExp '(x x)) nil)
+(check= (UnaryExp '(~ x)) t)
+(check= (UnaryExp '(~ x x)) nil)
+(check= (UnaryExp '(~ (^ x x))) t)
+(test? (implies 
+        (and 
+         (UnaryOpp a) 
+         (PropExp b)) 
+        (UnaryExp (list a b))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; IMPROVE (Modify the input and ouput contracts to use different
 ;;          recognizers. The function signature can change. 
@@ -580,12 +628,12 @@ regarding the existing code being admitted into ACL2s.
 ;; get-vars returns a list of variables appearing in px OR
 ;;   in the provided accumulator acc. If acc has
 ;;   no duplicates in it, then the returned list should not have
-;;   any duplicates either. See the check='s below.
+;;   any duplicates either. See the scheck='s below.
 ;; NOTICE: the way you traverse px for get-vars will be how you traverse
 ;; expressions in later functions you will write.
 (defunc get-vars (px acc)
-  :input-contract (and (PropExp px)(listp acc))
-  :output-contract (listp (get-vars px acc))
+  :input-contract (and (PropExp px) (Lopvp acc))
+  :output-contract (Lopvp (get-vars px acc))
   (cond ((booleanp px) acc)
         ((PXVarp px) (add px acc))
         ((UnaryExp px)(get-vars (second px) acc))
@@ -639,13 +687,20 @@ regarding the existing code being admitted into ACL2s.
 (defunc update (px name val)
   :input-contract (and (PropExp px) (PXVarp name) (booleanp val))
   :output-contract (Propexp (update px name val))
-.............)
-
+  (cond ((booleanp px) px)
+        ((PXVarp px) (if (equal name px) val px))
+        ((UnaryExp px)(list (first px) (update (second px) name val)))
+        (t (list (first px) (update (second px) name val)
+                 (update (third px) name val)))))
+           
 (check= (update T 'A NIL) T)
 (check= (update NIL 'A T) NIL)
 (check= (update 'A 'B T) 'A)
 (check= (update '(^ (v NIL A) (~ B)) 'A T) '(^ (v NIL T) (~ B)))
-;;Add additional tests
+
+(test? (implies (and (PropExp px) (PXVarp name) (booleanp val) (endp px)) 
+                (endp (update px name val))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GIVEN
@@ -669,10 +724,36 @@ regarding the existing code being admitted into ACL2s.
 (defunc beval (bx)
   :input-contract (PropExp bx)
   :output-contract (Booleanp (beval bx))
-  
+    (cond ((not (ConstBoolExp bx)) nil)
+          ((booleanp bx) bx)
+          ((UnaryExp bx) (not (beval (second bx))))
+          (t (cond ((equal '^ (first bx)) (and (beval (second bx)) (beval (third bx))))
+                   ((equal 'v (first bx)) (or (beval (second bx)) (beval (third bx))))
+                   ((equal '=> (first bx)) (implies (beval (second bx)) (beval (third bx))))
+                   ((equal '<> (first bx)) (or (and (beval (second bx)) (not (beval (third bx))))
+                                               (and (not (beval (second bx))) (beval (third bx)))))
+                   (t nil)))))
 
-(check= (ConstBoolExp '(v (~ nil) (^ nil t))) t)
-(check= (ConstBoolExp '(v (~ a) (^ nil t))) nil)
+(check= (beval '(v (~ nil) (^ nil t))) t)
+(check= (beval '(v (~ a) (^ nil t))) nil)
+(check= (beval '(=> nil t)) t)
+(check= (beval '(v (~ nil) (<> nil t))) t)
+(check= (beval '(v (~ nil) (<> t nil))) t)
+(check= (beval '(<> nil nil)) nil)
+(check= (beval '(=> t nil)) nil)
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (beval '(^ bx1 bx2))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(^ bx2 bx2)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(v bx1 bx2)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(<> bx1 bx1)))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (beval '(<> bx1 bx2))))
+(test? (implies (and (ConstBoolExp bx1) (ConstBoolExp bx2) 
+                     (beval bx1) (not (beval bx2))) (not (beval '(=> bx1 bx2)))))
+
 
 
 ;; Tests that may help you later (you can also write your own)
@@ -745,8 +826,13 @@ regarding the existing code being admitted into ACL2s.
 ;; always returns true. You must use pxSatp
 ;; to get credit.
 (defunc pxValidp (px)
-  .........)
-
+    :input-contract (PropExp px)
+    :output-contract (booleanp (pxValidp px))
+    (if (not (ConstBoolExp px))
+      (and (pxSatp px)
+           (pxValidp (updateFirstVar px t))
+           (pxValidp (updateFirstVar px nil)))
+      (beval px)))
 
 (check= (pxValidp *test_px1*) nil)
 (check= (pxValidp *test_px2*) nil)
@@ -755,7 +841,9 @@ regarding the existing code being admitted into ACL2s.
 
 
 ;; Add any additions tests you want here.
-.............
+(test? (implies (and (PropExp px) (ConstBoolExp px) (beval px)) (pxValidp px)))
+(test? (implies (and (PropExp px) (ConstBoolExp px) (not (beval px))) (not (pxValidp px))))
+(test? (implies (and (PropExp px) (not (pxSatp px))) (not (pxValidp px))))#|ACL2s-ToDo-Line|#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -807,19 +895,30 @@ have to perform contract completion first!
 5a. The length of the list obtained by consing x and y is 
     equal to the length of x plus the length of y.
 
-false
+    (implies t
+             (equal (len (cons x y)) (+ (len x) (len y))))
+invalid
 cons takes two anys and does not always return a list
-for example, where x and y are 2 and 4, (cons 2 4) is not a list
-also, if x and y are non-empty lists, 
+len takes an any and returns 0 if it is not a list, or the length of a list.
+
+if x and y are non-empty lists, 
 cons returns something with length equal to (len y) + 1
 (len (cons (list 2 4 5) (list 1 1 1))) = 4
 
+
+a similar but true statement would be:
+    (implies (and (listp x) (listp y))
+             (equal (len (app x y)) (+ (len x) (len y))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 5b. Appending the reverse of x and the reverse of y is equivalent to 
 reversing the list generated by appending x to y.
 
-false
+
+    (implies (and (listp x) (listp y))
+             (equal (reverse (app x y)) (app (reverse x) (reverse y))))
+             
+invalid
 example:
 x = (list 2 3 4)
 y = (list 4 5 6)
@@ -830,12 +929,19 @@ which means that the reverse of two appended lists only equates to the reverses 
 if they are appended in reverse order 
 (e.g. appending y to x instead of x to y)
 
+to make it true:
+    (implies (and (listp x) (listp y))
+             (equal (reverse (app x y)) (app (reverse y) (reverse x))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 5c. For any propositional expression (defined above), if the expression
 is not a PXVar or a list, then it is a boolean.
 
-true
-this is weird-- basically the above is an implies statement where the left hand side is false.
+(implies (and (PropExp px) (not (PXVarp px)) (not (listp px)))
+         (booleanp px))
+
+valid
+this is weird-- the above is an implies statement where the left hand side is always false.
 Here's why:
 (PXVarp t) == t
 (PXVarp nil) == t
@@ -858,8 +964,32 @@ Therefore, the conjecutre is valid. (But it sucks, and so does our definition of
 5d. For any list of rationals lr that has been sorted (assume sortedp exists),
 the first element of the list is smaller than any other elements in the list.
 
-false
+assuming the list is non-empty so that it has a first element
+also assuming smaller means strictly less than
+
+(implies (and (lorp lr) (sortedp lr) (consp lr))
+         (smaller (first lr) (rest lr)))
+         
+(defunc smaller(small lr)
+  :input-contract (and (rationalp small) (lorp lr))
+  :output-contract (booleanp (smaller small lr))
+  (if (endp lr) t
+  (and (< small (first lr))
+       (smaller small (rest lr)))))           
+
+invalid
 (list 1 1 1 1 1)
 1 is not smaller than 1.
 
+to make it true, use <=
+
+(implies (and (lorp lr) (sortedp lr) (consp lr))
+         (smaller (first lr) (rest lr))
+         
+(defunc smaller(small lr)
+  :input-contract (and (rationalp small) (lorp lr))
+  :output-contract (booleanp (smaller small lr))
+  (if (endp lr) t
+  (and (<= small (first lr))
+       (smaller small (rest lr))))) 
 |#
