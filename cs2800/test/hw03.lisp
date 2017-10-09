@@ -489,8 +489,7 @@ them.
 
 ;; Write tests to check that it behaves the same way as permutation-list
 ;; Is there a way to get ACL2s to do most of the testing for you?
-(test? (implies (and (listlistp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))#|ACL2s-ToDo-Line|#
-
+(test? (implies (and (listlistp ls) (consp ls) (permutation-list-help (first ls) (rest ls))) (equal (permutation-list2 ls) t)))
 (check= (permutation-list2 nil) t)
 (check= (permutation-list2 '(()()())) t)
 (check= (permutation-list2 '(()()(1))) nil)
@@ -962,4 +961,5 @@ make this sorting algorithm much faster and ACL2s could prove that it terminates
 (test? (implies (and (gradebookp gb) (equal (grade-category-num-counted (gradebook-assignments gb)) 0)
                      (equal (grade-category-num-counted (gradebook-tests gb)) 0)
                      (equal (grade-category-num-counted (gradebook-quizzes gb)) 0))
-                (equal (get-category-grade c) 'F)))
+                (equal (get-category-grade c) 'F)))#|ACL2s-ToDo-Line|#
+
