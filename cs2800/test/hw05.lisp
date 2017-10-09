@@ -503,7 +503,7 @@ give everyone else the points.
 The following team members filled out the feedback survey provided in 
 the link above:
 ---------------------------------------------
-<firstname> <LastName>
+Dylan Wight
 <firstname> <LastName>
 
 |#
