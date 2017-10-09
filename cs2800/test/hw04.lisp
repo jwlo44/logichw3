@@ -390,8 +390,7 @@ satisfiable, valid
                          (or (and nil (not p))
                              (not p))
                          (or (and p (not (not p)))
-                             (and (not p) (not p)))))))#|ACL2s-ToDo-Line|#
- 
+                             (and (not p) (not p))))))) 
 #|
 
 (D) [(~(p /\ q) \/ r) /\ (~p \/ ~q \/ ~r)] <> (p /\ q)
@@ -720,7 +719,6 @@ regarding the existing code being admitted into ACL2s.
   :output-contract (Booleanp (beval bx))
     (cond ((not (ConstBoolExp bx)) nil)
           ((booleanp bx) bx)
-          ;((PXVarp bx) nil)
           ((UnaryExp bx) (not (beval (second bx))))
           (t (cond ((equal '^ (first bx)) (and (beval (second bx)) (beval (third bx))))
                    ((equal 'v (first bx)) (or (beval (second bx)) (beval (third bx))))
