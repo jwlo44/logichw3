@@ -751,11 +751,10 @@ If there are no dupes in X, adding a will not result in any dupes.
 
 This does not mean our get-vars function will work, because we X could have dupes befoer we add anything.
 
-|#
-    
-#|
+
 b) Now prove that get-vars doesn't have duplicate propositional variables.
 The conjecture is below.
+
 
 ;; BinExp: All -> Boolean
 ;; A recognizer of binary propositional expressions.
@@ -787,19 +786,66 @@ The conjecture is below.
         (t (get-vars (third px)
                      (get-vars (second px) acc)))))
 
-PROVE The following conjecture
+;PROVE The following conjecture
 (implies (and (PropExp px)(lopvp acc)(no-dupesp acc)
               (implies (UnaryExp px) (no-dupesp (get-vars (second px) acc)))
-              (implies (BinExp px) (no-dupesp 
-               (get-vars (third px)(get-vars (second px) acc)))))
+              (implies (BinExp px) (no-dupesp (get-vars (third px) (get-vars (second px) acc)))))
          (no-dupesp (get-vars px acc)))
-You may need to use a proof by cases approach.
-
-.................
-|#                     
-  
+;You may need to use a proof by cases approach.
 
 
+(defdata PropEx
+  (oneof boolean
+         PXVar
+         (list UnaryOp PropEx)
+         (list  BinaryOp PropEx PropEx)))
+         
+ four cases:
+ 1. 
+(implies (and (booleanp px)(lopvp acc)(no-dupesp acc))
+         (no-dupesp (get-vars px acc)))
+         
+ boolean branch of get-vars: (implies (booleanp px) (and (get-var px acc)) acc)
+ subsitute this for (get-vars px acc):
+ 
+ (implies (and (booleanp px)(lopvp acc)(no-dupesp acc))
+         (no-dupesp acc))
+         
+(implies (no-dupesp acc) (no-dupesp acc)) 
+
+2.         
+(implies (and (PXVar px)(lopvp acc)(no-dupesp acc))
+         (no-dupesp (get-vars px acc)))
+         
+ PXVar branch of get-vars: (implies (PXVar px) (and (get-var px acc)) (add px acc))
+ (implies (and (PXVar px)(lopvp acc)(no-dupesp acc))
+         (no-dupesp (add px acc)))
+ 
+Already proved this in 5a)
+
+3.
+(implies (and (UnaryExp px)(lopvp acc)(no-dupesp acc)(no-dupesp (get-vars (second px) acc)))
+         (no-dupesp (get-vars px acc)))
+         
+Unary branch: ((UnaryExp px)(get-vars (second px) acc))
+
+(implies (and (UnaryExp px)(lopvp acc)(no-dupesp acc)(no-dupesp (get-vars (second px) acc)))
+         (no-dupesp (get-vars (second px) acc)))
+(get-vars (second px) acc)) implies (get-vars (second px) acc))
+(implies (and a b c) c)
+
+4.
+(implies (and (BinExp px)(lopvp acc)(no-dupesp acc)(no-dupesp (get-vars (third px) (get-vars (second px) acc))))
+         (no-dupesp (get-vars px acc)))
+         
+BinExp branch: (get-vars (third px) (get-vars (second px) acc)) 
+
+(implies (and (BinExp px)(lopvp acc)(no-dupesp acc)(no-dupesp (get-vars (third px) (get-vars (second px) acc))))
+         (no-dupesp (get-vars (third px) (get-vars (second px) acc))) 
+ 
+ (implies (and a b c) c)
+                   
+|#
 #|
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;; Question 6: Duplicate Length (not graded)
