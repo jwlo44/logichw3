@@ -29,7 +29,7 @@ If your group does not already exist:
 
 
 Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
-
+Names of ALL group members: Julia Wlochowski, Dylan Wight
 Note: There will be a 10 pt penalty if your names do not follow 
 this format.
 
@@ -207,7 +207,7 @@ Here are the definitions used for the remainder of the questions.
   (if (consp l) nil t))
   
 (defunc len (x)
-  :input-contract (listp lenx)
+  :input-contract (listp x)
   :output-contract (natp (len x))
   (if (endp x)
     0
@@ -301,7 +301,10 @@ needs to be:
 ;; (abs2 i) takes an integer i and returns its absolute value (or the
 ;; distance from i to 0). abs2 must be non-recursive or you will
 ;; receive no marks for question 2.
-..........
+(defunc abs2 (i)
+  :input-contract (integerp i)
+  :output-contract (natp (abs2 i))
+  (if (< 0 i) (* -1 i) i))
 
 
 #|
