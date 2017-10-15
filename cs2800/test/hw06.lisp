@@ -57,7 +57,6 @@ The Beginner level is the next level after Bare Bones level.
 ; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
 ;$ACL2s-SMode$;Beginner
 #|
-#|
 CS 2800 Homework 6 - Fall 2017
 
 
@@ -88,7 +87,7 @@ If your group does not already exist:
 
 
 Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
-
+Names of ALL group members: Julia Wlochowski, Dylan Wight
 Note: There will be a 10 pt penalty if your names do not follow 
 this format.
 
@@ -139,8 +138,19 @@ and
                       (and (< (foo n p) p)
                            (>= (foo p n) n))))
 
-..............
+= {exportation}
+(implies (and (natp n)(posp p) (> n p))
+         (and (< (foo n p) p)
+              (>= (foo p n) n)))
 
+= {and in rhs gives 2 proof obligations}
+(implies (and (natp n)(posp p) (> n p))
+         (< (foo n p) p))
+and
+(implies (and (natp n)(posp p) (> n p))
+              (>= (foo p n) n))
+              
+              
 1b. (implies (integerp i)
              (implies (or (< i 0)
                           (and (not (< i 0))(equal i 0))
@@ -148,14 +158,38 @@ and
                       (natp (abs i))))
 Based on arithmetic, make sure you simplify the conditions
 
-..............
+= {arithmetic and or short-circuiting}
+(implies (integerp i)
+         (implies (or (< i 0)
+                      (equal i 0)
+                      (and (not (< i 0))(not (equal i 0))))
+                  (natp (abs i))))
+
+= {or,  t => b == b} ;; the inner implies is always true
+(implies (integerp i) (natp (abs i))))
 
 1c. (implies (listp l)
              (iff (equal (len l) 0)(endp l)))
 Please convert the iff to implies rather than equality
 
-..............
+= {convert iff to implies}
+(implies (listp l)
+         (and (implies (equal (len l) 0)(endp l))
+              (implies (endp l)(equal (len l) 0)))
 
+= {and in rhs gives two proof cases}
+(implies (listp l)
+         (implies (equal (len l) 0)(endp l)))
+and        
+(implies (listp l)
+              (implies (endp l)(equal (len l) 0)))
+              
+= {exportation}
+(implies (and (listp l)(equal (len l) 0))
+         (endp l))
+and        
+(implies (and (listp l)(endp l))
+         (equal (len l) 0))
 |#
 
 
@@ -231,7 +265,7 @@ Here are the definitions used for the remainder of the questions.
   (if (consp l) nil t))
   
 (defunc len (x)
-  :input-contract (listp lenx)
+  :input-contract (listp x)
   :output-contract (natp (len x))
   (if (endp x)
     0
@@ -325,7 +359,14 @@ needs to be:
 ;; (abs2 i) takes an integer i and returns its absolute value (or the
 ;; distance from i to 0). abs2 must be non-recursive or you will
 ;; receive no marks for question 2.
-..........
+(defunc abs2 (i)
+  :input-contract (integerp i)
+  :output-contract (natp (abs2 i))
+  (if (< i 0) (* -1 i) i))
+(test? (implies (integerp i) (equal (abs i) (abs2 i))))
+(check= (abs2 0) 0)
+(check= (abs2 -4) 4)
+(check= (abs2 77) 77)#|ACL2s-ToDo-Line|#
 
 
 #|
@@ -336,20 +377,168 @@ the proof obligations (what you need to prove) have been provided (b-d)
 
 b) (implies (equal i 0) (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking 
+(in contexts)
 
-c) c) (implies (and (< i 0)(implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+;; contexts
+c1. i = 0
+---------
+c2. integerp i {c1, def. integerp}
+
+;; tests
+(above, with definition of abs)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+= {def. abs}
+(equal  (cond ((equal 0 0) 0)
+              ((< 0 0) (+ 1 (abs (+ 0 1))))
+              (t       (+ 1 (abs (- 0 1)))))
+        (abs2 i))
+        
+= {cond, c1}
+(equal 0 (abs2 i))
+
+= {def. abs2}
+(if (< 0 0) (* -1 0) 0))
+
+= {if, <}
+(equal 0  0)
+t
+
+c) (implies (and (< i 0)(implies (and (integerp (+ i 1))(<= (+ i 1) 0))
                                     (equal (abs (+ i 1))(abs2 (+ i 1)))))
                (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking
+(implies (and (integerp i)
+              (< i 0)
+              (implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+                       (equal (abs (+ i 1))(abs2 (+ i 1)))))
+               (equal (abs i)(abs2 i)))
+
+;; contexts
+c1. integerp i
+c2. i < 0
+c3. (implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+                       (equal (abs (+ i 1))(abs2 (+ i 1))))
+..............................................................
+c4. (integerp (+ i 1)) {integerp, c1}
+c5. (<= (+ i 1) 0) {integerp, c1, c2, arithmetic}
+c6. (equal (abs (+ i 1))(abs2 (+ i 1))) {MP, c4, c5, c3}
+
+;; tests
+(see def abs2)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+= {def abs}
+(equal  (cond ((equal i 0) 0)
+              ((< i 0) (+ 1 (abs (+ i 1))))
+              (t       (+ 1 (abs (- i 1)))))
+        (abs2 i))
+
+= {cond, c2}
+(equal (+1 (abs (+ i 1)))
+       (abs2 i))
+
+= {def abs2}
+(equal (+1 (abs (+ i 1)))
+       (if (< i 0) (* -1 i) i))
+
+={c2, if}
+(equal (+1 (abs (+ i 1)))
+       (* -1 i))
+
+={c6}
+(equal (+1 (abs2 (+ i 1)))
+       (* -1 i))  
+
+={def. abs2}
+(equal (+ 1 (if (< ( + i 1) 0) (* -1 (+ i 1)) (+ i 1)))
+       (* -1 i))
+
+={case 1: i + 1 < 0, ifs}
+(equal (+ 1 (* -1 (+ i 1)))
+       (* -1 i))
+
+= {arithmetic}
+(equal (* -1 i)
+       (* -1 i))
+t
+
+={case 2: i + 1 == 0, ifs, c2, arithmetic}
+(equal (+ 1 0)
+       (* -1 i))
+       
+={i == -1, arithmetic}
+(equal (+ 1 0)
+       (* -1 -1))
+= {arithmetic}
+(equal 1 1)
+t
 
 d) (implies (and (> i 0)(implies (integerp (- i 1))
                                  (equal (abs (- i 1))(abs2 (- i 1)))))
             (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking
+(implies (and (integerp i)
+              (> i 0)
+              (implies (integerp (- i 1))
+                       (equal (abs (- i 1))(abs2 (- i 1)))))
+         (equal (abs i)(abs2 i)))
 
+;; contexts
+c1. integerp i
+c2. i > 0
+c3. (implies (integerp (- i 1)) (equal (abs (- i 1))(abs2 (- i 1)))))
+.....................................................................
+c4. (integerp (- i 1)) {integerp, c1}
+c5. (equal (abs (- i 1))(abs2 (- i 1))) {MP, c3, c4}
+
+;; tests
+(see above)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+={def abs}
+(equal
+  (cond ((equal i 0) 0)
+        ((< i 0) (+ 1 (abs (+ i 1))))
+        (t       (+ 1 (abs (- i 1)))))
+  (abs2 i))
+
+= {cond, c2}
+(equal (+ 1 (abs (- i 1)))
+       (abs2 i))
+
+= {c5}
+(equal (+ 1 (abs2 (- i 1)))
+       (abs2 i))
+ 
+= {def. abs2}
+(equal (+ 1 (abs2 (- i 1)))
+       (if (< i 0) (* -1 i) i))
+
+= {c2, ifs}
+(equal (+ 1 (abs2 (- i 1)))
+       i)
+
+= {def abs2}
+(equal (+ 1 (if (< (- i 1) 0) (* -1 (- i 1)) (- i 1))
+        i)
+
+= {ifs}
+(equal (+ 1 (- i 1)) i)
+
+= {arithmetic}
+(equal i i)
+t
+       
 |#
 
 #|
@@ -381,7 +570,6 @@ Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
         ((nelistp (first l)) nil)
         (t               (flat-listp (rest l)))))
 
-
 ;; flatten-list: List -> List
 ;; (flatten-list l) takes a list and puts all atoms
 ;; in the list at the top level. Thus the generated list
@@ -395,6 +583,7 @@ Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
          (cons (first l) (flatten-list (rest l))))
         (t         (app (flatten-list (first l)) 
                         (flatten-list (rest l))))))
+
 
 Well neither ACL2s nor your professor can prove that flatten-list must
 produce a flat list (by definition of flat-listp).  Prove it to show
@@ -416,9 +605,32 @@ is similar to what you did in section 1.
 
 Also note the two implies within the giant AND statement (lines 2 to 4 
 of the conjecture above). How can you use these?  In what circumstances?
+You can the implies within the and statement when their lhs are true, using Modus Ponens. 
 
-..............
+{breaking up OR in rhs into 3 different proof obligations}
+obligation 1:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (endp l))
+         (flat-listp (flatten-list l)))
 
+obligation 2:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(nelistp (first l))))
+         (flat-listp (flatten-list l)))       
+
+obligation 3:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(not (nelistp (first l)))))
+         (flat-listp (flatten-list l)))
 
 b) Now prove your three proof obligations. You can assume the following
 theorems:
@@ -427,14 +639,186 @@ phi_flatten_app: (implies (and (flat-listp l1)(flat-listp l2))
 phi_flatten_cons: (implies (and (flat-listp l)(not (nelistp e)))
                           (flat-listp (cons e l)))
 
-..............
+
+obligation 1:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (endp l))
+         (flat-listp (flatten-list l)))
+
+;; contract checking -- ok
+;; context
+c1. listp l
+c2. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c3. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+c4. endp l
+................................................................
+c5. c2 and c3 are useless {c2, c3, c4, implies}
+
+;; proof                        
+(flat-listp (flatten-list l))
+
+= {flatten-list def}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l)))))))
+= {ifs, c4}
+(flat-listp l)
+
+= {flat-listp def, c4, ifs}
+t
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; obligation 2
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(nelistp (first l))))
+         (flat-listp (flatten-list l))) 
+         
+simplify this a little         
+= {PL(associativity, commutativity)}
+(implies (and (listp l)
+              (nelistp l)
+              (nelistp (first l))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+         (flat-listp (flatten-list l)))
+         
+;; contract checking -- ok
+;; contexts
+c1. listp l
+c2. nelistp l
+c3. nelistp (first l)
+c4. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c5. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+...............................................................
+c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
+c7. (flat-listp (flatten-list (first l))) {MP, c3, c5}
+
+;; test?
+;; proof
+(flat-listp (flatten-list l))
+
+={def flatten-list}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l))))))
+={cond, c2, c3}
+(flat-listp (app (flatten-list (first l)) 
+                 (flatten-list (rest l))))
+
+={phi_flatten_app, c6, c7}
+t
+
+obligation 3:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(not (nelistp (first l)))))
+         (flat-listp (flatten-list l)))
+         
+;; simplify
+={associativity, commutativity}
+(implies (and (listp l)
+              (nelistp l)
+              (not (nelistp (first l)))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+         (flat-listp (flatten-list l)))
+
+;; contract checking check
+;; contexts
+c1. listp l
+c2. nelistp l
+c3. (not (nelistp (first l)))
+c4. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c5. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+................................................................
+c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
+c7. c5 is useless {implies, c3, c5}
+
+;; proof
+(flat-listp (flatten-list l))
+
+={def. flatten-list}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l))))))
+
+= {cond, c2, endp, c3}
+(flat-listp
+  (cons (first l) (flatten-list (rest l))))
+
+= {phi_flatten_cons, c6}
+t
 
 c) OK.  You have higher standards than that.  You don't want to 
 just assume the given theorems. Prove phi_flatten_cons. You can
 assume that (flat-listp l) => (listp l)
 
-..............
+phi_flatten_cons
+(implies (and (flat-listp l)(not (nelistp e)))
+         (flat-listp (cons e l)))
 
+;; contract checking good
+;; contexts
+c1. flat-listp l
+c2. (not (nelistp e))
+.......................
+c3. listp l {per above}
+
+;; proof
+(flat-listp (cons e l))
+
+={def. flat-listp}
+  (cond ((not (listp (cons e l))) nil)
+        ((endp (cons e l))        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={listp, c3, cons, PL}
+  (cond (nil nil)
+        ((endp (cons e l))        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={endp, c3, cons}
+  (cond (nil nil)
+        (nil        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={first-rest, cons}
+  (cond (nil nil)
+        (nil        t)
+        ((nelistp e) nil)
+        (t               (flat-listp (rest (cons e l))))))
+={c2, cond}
+(flat-listp (rest (cons e l)))
+
+={first-rest, cons}
+(flat-listp l)
+
+={c1}
+t
 
 =========================
 Question 4: Primes
