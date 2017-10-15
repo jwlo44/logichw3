@@ -609,10 +609,16 @@ A1: (iff (in b (factors a)) (integerp (/ a b)))
 
 * iff is "if and only if" in case you forgot
 What is this equivalent to (there are multiple things).
+(iff a b) is equivalent to (and (implies a b) (implies b a))
+
+
+(and (implies (in b (factors a)) (integerp (/ a b)))
+     (implies (integerp (/ a b)) (in b (factors a))))
+     
+Need to ensure a and b are posp on both sides.
 
 **YOU MAY ASSUME A1 (after contract completion) IS A THEOREM**
-
-..............
+(iff (and (posp b) (posp a) (in b (factors a))) (and (posp b) (posp a) (integerp (/ a b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Prove each of the following conjectures with equational reasoning or provide a 
@@ -623,7 +629,7 @@ d) (implies (and (posp a) (posp b) (posp c)
                  (not (coprime a c)))
             (coprime b c))
 
-..............
+ counter example: a = 2, b = 9, c = 6
 
 e)  (implies (and (posp a)(posp b))
              (iff (equal (gcd a b) 1)
@@ -632,8 +638,41 @@ e)  (implies (and (posp a)(posp b))
  means that l is empty......at least when l is a list
  of prime factors
  
-..............
-
+(implies (and (posp a)(posp b))
+             (iff (equal (gcd a b) 1)
+                  (coprimep a b)))
+                  
+ substitution of (coprimep a b)
+ 
+ (implies (and (posp a)(posp b))
+             (iff (equal (gcd a b) 1)
+                  (endp (intersect (factors a) (factors b)))))
+                  
+ substitution of (gcd a b)
+ 
+ (implies (and (posp a)(posp b))
+             (iff (equal (mult-primes (intersect (factors a) (factors b)) 1))
+                  (endp (intersect (factors a) (factors b))))
+ 
+ replace (intersect (factors a) (factors b)) with lop l
+ 
+  (implies (and (lopp l))
+             (iff (equal (mult-primes l 1))
+                  (endp l)))
+                  
+ break apart iff
+ 
+   (implies (and (lopp l))
+             (and (implies (mult-primes l 1) (endp l)))
+                  (implies (endp l) (mult-primes l 1)))
+             
+ 
+(implies (mult-primes l 1) (endp l)) is valid because we assume that (prod-list l) = 1 
+ means that l is empty
+ 
+(implies (endp l) (mult-primes l 1)) is valid because the first line of mult-primes returns 1 if (endp l)
+ 
+                  
 f) (implies (and (posp a) (posp b) (posp c)
                  (in b (factors a)))
             (in b (factors (* a c))))
