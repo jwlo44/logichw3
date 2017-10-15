@@ -678,14 +678,18 @@ f) (implies (and (posp a) (posp b) (posp c)
             (in b (factors (* a c))))
 
 
-...............
+(equals (factors (* a c)) (append (factors a) factors c))
+
+(factors a) is a subset of (factors (* a c)), so if b is in (factors a) it must be in (factors (* a c))
 
 
 f) (implies (and (posp n) (natp (/ n 6))
             (>= (len (factors n)) 2)))
 
-...............
 
+The factor list of any number divisabe by 6 will contain 2 and 3. THerefor this factor list must be contain 
+at least two numbers.
+            
 |#
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -694,7 +698,6 @@ f) (implies (and (posp n) (natp (/ n 6))
   Now let's look back at HW04.  Here is a (modified) version of the add
   function and related functions and data definitions, all of which
   you can assume have been admitted into ACL2s:
-
 
 (defdata PXVar symbol)
 (defdata UnaryOp '~)
@@ -724,10 +727,29 @@ the accumulator can have duplicate values. Prove that your add function prevents
 this by proving the following conjecture:
 (implies (not (no-dupes (add a X))) (not (no-dupesp X)))
 
+(defunc add (a X)
+  :input-contract (and (PXVarp a)(lopvp X))
+  :output-contract (lopvp (add a X))
+  (if (in a X)
+    X
+    (cons a X)))
+    
+ If a is in X then this can be subsituted to an identify 
+ (implies (not (no-dupes X)) (not (no-dupesp X)))
+
+If a is not in X then, we know adding a didn't make there be a dup.
+    
 Think about cases you might encounter or need to handle to prove this?
 Is there a better way to write this conjecture?
 
-...........
+This conjuncture says that is the result of adding a to X has dups then X already had a dupe. This is true
+because add a checks if a is in X and only adds X if it is not in X.
+
+This is a better way to write it:
+(implies (no-dupesp X) (no-dupes (add a X)))
+If there are no dupes in X, adding a will not result in any dupes.
+
+This does not mean our get-vars function will work, because we X could have dupes befoer we add anything.
 
 |#
     
