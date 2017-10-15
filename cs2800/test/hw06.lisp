@@ -1,3 +1,61 @@
+; **************** BEGIN INITIALIZATION FOR ACL2s B MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+
+#|
+Pete Manolios
+Fri Jan 27 09:39:00 EST 2012
+----------------------------
+
+Made changes for spring 2012.
+
+
+Pete Manolios
+Thu Jan 27 18:53:33 EST 2011
+----------------------------
+
+The Beginner level is the next level after Bare Bones level.
+
+|#
+
+; Put CCG book first in order, since it seems this results in faster loading of this mode.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "ccg/ccg" :uncertified-okp nil :dir :acl2s-modes :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "base-theory" :dir :acl2s-modes)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "custom" :dir :acl2s-modes :uncertified-okp nil :ttags :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading trace-star and evalable-ld-printing books.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "trace-star" :uncertified-okp nil :dir :acl2s-modes :ttags ((:acl2s-interaction)) :load-compiled-file nil)
+(include-book "hacking/evalable-ld-printing" :uncertified-okp nil :dir :system :ttags ((:evalable-ld-printing)) :load-compiled-file nil)
+
+;theory for beginner mode
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s beginner theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "beginner-theory" :dir :acl2s-modes :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s Beginner mode.") (value :invisible))
+;Settings specific to ACL2s Beginner mode.
+(acl2s-beginner-settings)
+
+; why why why why 
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+(cw "~@0Beginner mode loaded.~%~@1"
+    #+acl2s-startup "${NoMoReSnIp}$~%" #-acl2s-startup ""
+    #+acl2s-startup "${SnIpMeHeRe}$~%" #-acl2s-startup "")
+
+
+(acl2::in-package "ACL2S B")
+
+; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
+;$ACL2s-SMode$;Beginner
 #|
 CS 2800 Homework 6 - Fall 2017
 
@@ -304,7 +362,11 @@ needs to be:
 (defunc abs2 (i)
   :input-contract (integerp i)
   :output-contract (natp (abs2 i))
-  (if (< 0 i) (* -1 i) i))
+  (if (< i 0) (* -1 i) i))
+(test? (implies (integerp i) (equal (abs i) (abs2 i))))
+(check= (abs2 0) 0)
+(check= (abs2 -4) 4)
+(check= (abs2 77) 77)#|ACL2s-ToDo-Line|#
 
 
 #|
@@ -315,13 +377,108 @@ the proof obligations (what you need to prove) have been provided (b-d)
 
 b) (implies (equal i 0) (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking 
+(in contexts)
 
-c) c) (implies (and (< i 0)(implies (and (integerp (+ i 1))(<= (+ i 1) 0))
-                                    (equal (abs (+ i 1))(abs2 (+ i 1)))))
+;; contexts
+c1. i = 0
+---------
+c2. integerp i {c1, def. integerp}
+
+;; tests
+(above, with definition of abs)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+= {def. abs}
+(equal  (cond ((equal 0 0) 0)
+              ((< 0 0) (+ 1 (abs (+ 0 1))))
+              (t       (+ 1 (abs (- 0 1)))))
+        (abs2 i))
+        
+= {cond, c1}
+(equal 0 (abs2 i))
+
+= {def. abs2}
+(if (< 0 0) (* -1 0) 0))
+
+= {if, <}
+(equal 0  0)
+t
+
+c) (implies (and (< i 0)(implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+                                 (equal (abs (+ i 1))(abs2 (+ i 1)))))
                (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking
+(implies (and (integerp i)
+              (< i 0)
+              (implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+                       (equal (abs (+ i 1))(abs2 (+ i 1)))))
+               (equal (abs i)(abs2 i)))
+               
+;; contexts
+c1. integerp i
+c2. i < 0
+c3. (implies (and (integerp (+ i 1))(<= (+ i 1) 0))
+                       (equal (abs (+ i 1))(abs2 (+ i 1))))
+..............................................................
+c4. (integerp (+ i 1)) {integerp, c1}
+c5. (<= (+ i 1) 0) {integerp, c1, c2, arithmetic}
+c6. (equal (abs (+ i 1))(abs2 (+ i 1))) {MP, c4, c5, c3}
+
+;; tests
+(see def abs2)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+= {def abs}
+(equal  (cond ((equal i 0) 0)
+              ((< i 0) (+ 1 (abs (+ i 1))))
+              (t       (+ 1 (abs (- i 1)))))
+        (abs2 i))
+
+= {cond, c2}
+(equal (+1 (abs (+ i 1)))
+       (abs2 i))
+
+= {def abs2}
+(equal (+1 (abs (+ i 1)))
+       (if (< i 0) (* -1 i) i))
+
+={c2, if}
+(equal (+1 (abs (+ i 1)))
+       (* -1 i))
+
+={c6}
+(equal (+1 (abs2 (+ i 1)))
+       (* -1 i))  
+
+={def. abs2}
+(equal (+ 1 (if (< ( + i 1) 0) (* -1 (+ i 1)) (+ i 1)))
+       (* -1 i))
+
+={case 1: i + 1 < 0, ifs}
+(equal (+ 1 (* -1 (+ i 1)))
+       (* -1 i))
+
+= {arithmetic}
+(equal (* -1 i)
+       (* -1 i))
+t
+
+={case 2: i + 1 == 0, ifs, c2, arithmetic}
+(equal (+ 1 0)
+       (* -1 i))
+       
+={i == -1, arithmetic}
+(equal (+ 1 0)
+       (* -1 -1))
+= {arithmetic}
+(equal 1 1)
+t
 
 d) (implies (and (> i 0)(implies (integerp (- i 1))
                                  (equal (abs (- i 1))(abs2 (- i 1)))))
