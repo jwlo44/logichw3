@@ -484,8 +484,61 @@ d) (implies (and (> i 0)(implies (integerp (- i 1))
                                  (equal (abs (- i 1))(abs2 (- i 1)))))
             (equal (abs i)(abs2 i)))
 
-..............
+;; contract checking
+(implies (and (integerp i)
+              (> i 0)
+              (implies (integerp (- i 1))
+                       (equal (abs (- i 1))(abs2 (- i 1)))))
+         (equal (abs i)(abs2 i)))
 
+;; contexts
+c1. integerp i
+c2. i > 0
+c3. (implies (integerp (- i 1)) (equal (abs (- i 1))(abs2 (- i 1)))))
+.....................................................................
+c4. (integerp (- i 1)) {integerp, c1}
+c5. (equal (abs (- i 1))(abs2 (- i 1))) {MP, c3, c4}
+
+;; tests
+(see above)
+
+;; proof
+(equal (abs i)(abs2 i))
+
+={def abs}
+(equal
+  (cond ((equal i 0) 0)
+        ((< i 0) (+ 1 (abs (+ i 1))))
+        (t       (+ 1 (abs (- i 1)))))
+  (abs2 i))
+
+= {cond, c2}
+(equal (+ 1 (abs (- i 1)))
+       (abs2 i))
+
+= {c5}
+(equal (+ 1 (abs2 (- i 1)))
+       (abs2 i))
+ 
+= {def. abs2}
+(equal (+ 1 (abs2 (- i 1)))
+       (if (< i 0) (* -1 i) i))
+
+= {c2, ifs}
+(equal (+ 1 (abs2 (- i 1)))
+       i)
+
+= {def abs2}
+(equal (+ 1 (if (< (- i 1) 0) (* -1 (- i 1)) (- i 1))
+        i)
+
+= {ifs}
+(equal (+ 1 (- i 1)) i)
+
+= {arithmetic}
+(equal i i)
+t
+       
 |#
 
 #|
