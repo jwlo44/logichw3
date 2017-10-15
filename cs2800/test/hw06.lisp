@@ -677,18 +677,25 @@ f) (implies (and (posp a) (posp b) (posp c)
                  (in b (factors a)))
             (in b (factors (* a c))))
 
-
+            
+            
+          
 (equals (factors (* a c)) (append (factors a) factors c))
 
 (factors a) is a subset of (factors (* a c)), so if b is in (factors a) it must be in (factors (* a c))
 
-
-f) (implies (and (posp n) (natp (/ n 6))
+      (if (> v n)
+        nil
+        (if (posp (/ n v))
+          (cons v (factors-helper (/ n v) 2))
+          (factors-helper n (+ v 1)))))
+          
+g) (implies (and (posp n) (natp (/ n 6))
             (>= (len (factors n)) 2)))
 
 
-The factor list of any number divisabe by 6 will contain 2 and 3. THerefor this factor list must be contain 
-at least two numbers.
+The factor list of any number divisable by 6 will contain 2 and 3. THerefor this factor list must be contain 
+at least two numbers
             
 |#
 #|
