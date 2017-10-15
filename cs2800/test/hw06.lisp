@@ -1,3 +1,62 @@
+; **************** BEGIN INITIALIZATION FOR ACL2s B MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+
+#|
+Pete Manolios
+Fri Jan 27 09:39:00 EST 2012
+----------------------------
+
+Made changes for spring 2012.
+
+
+Pete Manolios
+Thu Jan 27 18:53:33 EST 2011
+----------------------------
+
+The Beginner level is the next level after Bare Bones level.
+
+|#
+
+; Put CCG book first in order, since it seems this results in faster loading of this mode.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "ccg/ccg" :uncertified-okp nil :dir :acl2s-modes :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "base-theory" :dir :acl2s-modes)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "custom" :dir :acl2s-modes :uncertified-okp nil :ttags :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading trace-star and evalable-ld-printing books.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "trace-star" :uncertified-okp nil :dir :acl2s-modes :ttags ((:acl2s-interaction)) :load-compiled-file nil)
+(include-book "hacking/evalable-ld-printing" :uncertified-okp nil :dir :system :ttags ((:evalable-ld-printing)) :load-compiled-file nil)
+
+;theory for beginner mode
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s beginner theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "beginner-theory" :dir :acl2s-modes :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s Beginner mode.") (value :invisible))
+;Settings specific to ACL2s Beginner mode.
+(acl2s-beginner-settings)
+
+; why why why why 
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+(cw "~@0Beginner mode loaded.~%~@1"
+    #+acl2s-startup "${NoMoReSnIp}$~%" #-acl2s-startup ""
+    #+acl2s-startup "${SnIpMeHeRe}$~%" #-acl2s-startup "")
+
+
+(acl2::in-package "ACL2S B")
+
+; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
+;$ACL2s-SMode$;Beginner
+#|
 #|
 CS 2800 Homework 6 - Fall 2017
 
@@ -406,16 +465,22 @@ Here's the given prime method.
 a) Is there something wrong with this approach if we assume v starts at 1?  
 If yes, give an input that will cause a problem. If no then give Professor Sprague 
 $5 for the awesome algorithm.
-..............
+
+This appprach is wrong. factors1 will never return 2 or n even when n is a even number. 
+If we call (factors1 6 1) we will get '(1 3) instead of  '(1 2 3 6) the actual factors of 6.
+This appraoch also will not return multiple of the same number (factors1 9 1) will return '(1 3 9) 
+instead of '(1 3 3 9).
 
 |#
 
 
 #|
 
+
 b) Define a new factors function according to its purpose statement. 
 You may need a helper function. Also, don't worry too much about efficiency.
 
+|#
 |#
 
 (defdata factor (range integer (2 <= _)))
@@ -428,6 +493,15 @@ You may need a helper function. Also, don't worry too much about efficiency.
 :program
 
 
+(defunc factors-helper (n v)
+    :input-contract (and (posp n) (posp v))
+    :output-contract (lopp (factors-helper n v))
+      (if (> v n)
+        nil
+        (if (posp (/ n v))
+          (cons v (factors-helper (/ n v) 2))
+          (factors-helper n (+ v 1)))))
+
 ;; DEFINE
 ;; factors : Pos -> Lop
 ;; returns a list containing all PRIME factors of n including (possibly) 
@@ -435,7 +509,11 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (defunc factors (n)
     :input-contract (posp n)
     :output-contract (lopp (factors n))
-    ...............)
+    (if (equal n 1)
+      (list 1)
+      (factors-helper n 2)))
+
+    
 
 ;; Note the factors for 12 *could* be listed as 1 2 3 4 6 12 but
 ;; really 12 is uniquely represented as the product of non-decreasing 
@@ -451,6 +529,7 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (check= (factors 6)'(2 3))
 (check= (factors 12)'(2 2 3))
 (check= (factors 13)'(13))
+
 
 ;; GIVEN
 ;; Defined in previous functions. Removes
@@ -493,6 +572,17 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (sig intersect ((listof :b) (listof :b)) => (listof :b))
 
 
+(defunc mult-primes (l) 
+    :input-contract (lopp l)
+    :output-contract (natp (mult-primes l))
+    (if (endp l) 
+      1 
+      (* (first l) (mult-primes (rest l)))))
+
+(check= (mult-primes (list 7 2 5)) 70)
+(check= (mult-primes  nil) 1)
+
+
 ;; DEFINE
 ;; gcd: pos x pos -> pos
 ;; (gcd a b) determines the greatest common divisor for a and b.
@@ -500,7 +590,7 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (defunc gcd (a b)
     :input-contract (and (posp a) (posp b))
     :output-contract (posp (gcd a b))
-    ..............)
+    (mult-primes (intersect (factors a) (factors b))))
 
 (check= (gcd 7 6) 1)
 (check= (gcd 8 6) 2)
@@ -509,7 +599,8 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (check= (gcd 30 28) 2)
 (check= (gcd 35 28) 7)
 (test? (implies (and (posp a)(posp b))
-                (equal (gcd a b)(gcd b a))))
+                (equal (gcd a b)(gcd b a))))#|ACL2s-ToDo-Line|#
+
 #|
 
 c) Perform contract completion on the following:
@@ -704,4 +795,6 @@ to help out. Prove the following using equational reasoning:
          (implies (listp l) (evenp (len (duplicate l)))))
 
 ................
+|#
+
 |#
