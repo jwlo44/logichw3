@@ -80,8 +80,19 @@ and
                       (and (< (foo n p) p)
                            (>= (foo p n) n))))
 
-..............
-
+= {exportation}
+(implies (and (natp n)(posp p) (> n p))
+         (and (< (foo n p) p)
+              (>= (foo p n) n)))
+              
+= {and in rhs gives 2 proof obligations}
+(implies (and (natp n)(posp p) (> n p))
+         (< (foo n p) p))
+and
+(implies (and (natp n)(posp p) (> n p))
+              (>= (foo p n) n))
+              
+              
 1b. (implies (integerp i)
              (implies (or (< i 0)
                           (and (not (< i 0))(equal i 0))
@@ -89,14 +100,38 @@ and
                       (natp (abs i))))
 Based on arithmetic, make sure you simplify the conditions
 
-..............
+= {arithmetic and or short-circuiting}
+(implies (integerp i)
+         (implies (or (< i 0)
+                      (equal i 0)
+                      (and (not (< i 0))(not (equal i 0))))
+                  (natp (abs i))))
+                  
+= {or,  t => b == b} ;; the inner implies is always true
+(implies (integerp i) (natp (abs i))))
 
 1c. (implies (listp l)
              (iff (equal (len l) 0)(endp l)))
 Please convert the iff to implies rather than equality
 
-..............
-
+= {convert iff to implies}
+(implies (listp l)
+         (and (implies (equal (len l) 0)(endp l))
+              (implies (endp l)(equal (len l) 0)))
+  
+= {and in rhs gives two proof cases}
+(implies (listp l)
+         (implies (equal (len l) 0)(endp l)))
+and        
+(implies (listp l)
+              (implies (endp l)(equal (len l) 0)))
+              
+= {exportation}
+(implies (and (listp l)(equal (len l) 0))
+         (endp l))
+and        
+(implies (and (listp l)(endp l))
+         (equal (len l) 0))
 |#
 
 
