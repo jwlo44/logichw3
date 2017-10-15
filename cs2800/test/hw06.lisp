@@ -570,7 +570,6 @@ Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
         ((nelistp (first l)) nil)
         (t               (flat-listp (rest l)))))
 
-
 ;; flatten-list: List -> List
 ;; (flatten-list l) takes a list and puts all atoms
 ;; in the list at the top level. Thus the generated list
@@ -584,6 +583,7 @@ Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
          (cons (first l) (flatten-list (rest l))))
         (t         (app (flatten-list (first l)) 
                         (flatten-list (rest l))))))
+                        
 
 Well neither ACL2s nor your professor can prove that flatten-list must
 produce a flat list (by definition of flat-listp).  Prove it to show
@@ -605,9 +605,32 @@ is similar to what you did in section 1.
 
 Also note the two implies within the giant AND statement (lines 2 to 4 
 of the conjecture above). How can you use these?  In what circumstances?
+You can the implies within the and statement when their lhs are true, using Modus Ponens. 
 
-..............
+{breaking up OR in rhs into 3 different proof obligations}
+obligation 1:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (endp l))
+         (flat-listp (flatten-list l)))
 
+obligation 2:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(nelistp (first l))))
+         (flat-listp (flatten-list l)))       
+
+obligation 3:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(not (nelistp (first l)))))
+         (flat-listp (flatten-list l)))
 
 b) Now prove your three proof obligations. You can assume the following
 theorems:
@@ -616,14 +639,186 @@ phi_flatten_app: (implies (and (flat-listp l1)(flat-listp l2))
 phi_flatten_cons: (implies (and (flat-listp l)(not (nelistp e)))
                           (flat-listp (cons e l)))
 
-..............
+
+obligation 1:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (endp l))
+         (flat-listp (flatten-list l)))
+
+;; contract checking -- ok
+;; context
+c1. listp l
+c2. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c3. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+c4. endp l
+................................................................
+c5. c2 and c3 are useless {c2, c3, c4, implies}
+
+;; proof                        
+(flat-listp (flatten-list l))
+
+= {flatten-list def}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l)))))))
+= {ifs, c4}
+(flat-listp l)
+
+= {flat-listp def, c4, ifs}
+t
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; obligation 2
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(nelistp (first l))))
+         (flat-listp (flatten-list l))) 
+         
+simplify this a little         
+= {PL(associativity, commutativity)}
+(implies (and (listp l)
+              (nelistp l)
+              (nelistp (first l))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+         (flat-listp (flatten-list l)))
+         
+;; contract checking -- ok
+;; contexts
+c1. listp l
+c2. nelistp l
+c3. nelistp (first l)
+c4. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c5. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+...............................................................
+c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
+c7. (flat-listp (flatten-list (first l))) {MP, c3, c5}
+
+;; test?
+;; proof
+(flat-listp (flatten-list l))
+
+={def flatten-list}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l))))))
+={cond, c2, c3}
+(flat-listp (app (flatten-list (first l)) 
+                 (flatten-list (rest l))))
+
+={phi_flatten_app, c6, c7}
+t
+
+obligation 3:
+(implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (and (nelistp l)(not (nelistp (first l)))))
+         (flat-listp (flatten-list l)))
+         
+;; simplify
+={associativity, commutativity}
+(implies (and (listp l)
+              (nelistp l)
+              (not (nelistp (first l)))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+         (flat-listp (flatten-list l)))
+
+;; contract checking check
+;; contexts
+c1. listp l
+c2. nelistp l
+c3. (not (nelistp (first l)))
+c4. (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+c5. (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+................................................................
+c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
+c7. c5 is useless {implies, c3, c5}
+
+;; proof
+(flat-listp (flatten-list l))
+
+={def. flatten-list}
+(flat-listp
+  (cond ((endp l)  l)
+        ((not (nelistp (first l))) 
+         (cons (first l) (flatten-list (rest l))))
+        (t         (app (flatten-list (first l)) 
+                        (flatten-list (rest l))))))
+
+= {cond, c2, endp, c3}
+(flat-listp
+  (cons (first l) (flatten-list (rest l))))
+
+= {phi_flatten_cons, c6}
+t
 
 c) OK.  You have higher standards than that.  You don't want to 
 just assume the given theorems. Prove phi_flatten_cons. You can
 assume that (flat-listp l) => (listp l)
 
-..............
+phi_flatten_cons
+(implies (and (flat-listp l)(not (nelistp e)))
+         (flat-listp (cons e l)))
 
+;; contract checking good
+;; contexts
+c1. flat-listp l
+c2. (not (nelistp e))
+.......................
+c3. listp l {per above}
+
+;; proof
+(flat-listp (cons e l))
+
+={def. flat-listp}
+  (cond ((not (listp (cons e l))) nil)
+        ((endp (cons e l))        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={listp, c3, cons, PL}
+  (cond (nil nil)
+        ((endp (cons e l))        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={endp, c3, cons}
+  (cond (nil nil)
+        (nil        t)
+        ((nelistp (first (cons e l))) nil)
+        (t               (flat-listp (rest (cons e l))))))
+
+={first-rest, cons}
+  (cond (nil nil)
+        (nil        t)
+        ((nelistp e) nil)
+        (t               (flat-listp (rest (cons e l))))))
+={c2, cond}
+(flat-listp (rest (cons e l)))
+
+={first-rest, cons}
+(flat-listp l)
+
+={c1}
+t
 
 =========================
 Question 4: Primes
