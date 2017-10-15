@@ -366,8 +366,7 @@ needs to be:
 (test? (implies (integerp i) (equal (abs i) (abs2 i))))
 (check= (abs2 0) 0)
 (check= (abs2 -4) 4)
-(check= (abs2 77) 77)#|ACL2s-ToDo-Line|#
-
+(check= (abs2 77) 77)
 
 #|
 Now that you've written a faster absolute value function, show that
@@ -865,7 +864,6 @@ b) Define a new factors function according to its purpose statement.
 You may need a helper function. Also, don't worry too much about efficiency.
 
 |#
-|#
 
 (defdata factor (range integer (2 <= _)))
 ;; Ignore
@@ -1295,4 +1293,3 @@ to help out. Prove the following using equational reasoning:
 ................
 |#
 
-|#
