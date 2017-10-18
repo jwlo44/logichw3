@@ -85,7 +85,7 @@ If your group does not already exist:
    it will cost you points, so please read carefully.
 
 
-Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
+Names of ALL group members: Julia Wlochowski, Dylan Wight
 
 Note: There will be a 10 pt penalty if your names do not follow
 this format.
@@ -183,20 +183,18 @@ lecture notes. An example of test? is the following.
   :input-contract t
   :output-contract (booleanp (pure-listp l))
   (if (listp l)
-    (if (endp l)
-      t
-      (and (if (listp (first l))
-             (pure-listp (first l))
-             t)
+    (if (endp l) t
+      (and (or (atom (first l))
+               (pure-listp (first l)))
            (pure-listp (rest l))))
     nil))
 
 (check= (pure-listp nil) t)
 (check= (pure-listp (cons 1 2)) nil)
 (check= (pure-listp 4) nil)
-(check= (pure-listp (list 1 2 (list 3 (cons 4 3)))) nil)
-;; Add more tests
+(check= (pure-listp (list 1 2 (list 3 (cons 4 3)))) nil)#|ACL2s-ToDo-Line|#
 
+;; Add more tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Count the number of times that e occurs in a pure list
