@@ -363,6 +363,8 @@ needs to be:
   :input-contract (integerp i)
   :output-contract (natp (abs2 i))
   (if (< i 0) (* -1 i) i))
+
+;; tests
 (test? (implies (integerp i) (equal (abs i) (abs2 i))))
 (check= (abs2 0) 0)
 (check= (abs2 -4) 4)
@@ -546,7 +548,7 @@ Question 3: Flatten list
 
 Here are three functions "you" wrote for flattening a list
 Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
-
+|#
 ;; nelistp: All -> Boolean
 ;; nelistp returns true iff l is a non-empty list
 ;; Useful for simplifying the code below
@@ -576,14 +578,14 @@ Ex. (fatten-list '((1 2) '(3 '(4)))) returns '(1 2 3 4)
 ;; situations with non-list conses.
 (defunc flatten-list (l)
   :input-contract (listp l)
-  :output-contract (flat-listp l)
+  :output-contract (listp (flatten-list l))
   (cond ((endp l)  l)
         ((not (nelistp (first l))) 
          (cons (first l) (flatten-list (rest l))))
         (t         (app (flatten-list (first l)) 
                         (flatten-list (rest l))))))
 
-
+#|
 Well neither ACL2s nor your professor can prove that flatten-list must
 produce a flat list (by definition of flat-listp).  Prove it to show
 you are right.
@@ -657,6 +659,19 @@ c4. endp l
 ................................................................
 c5. c2 and c3 are useless {c2, c3, c4, implies}
 
+;; tests
+|#
+(test? 
+ (implies (and (listp l)
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l))))
+              (endp l))
+         (flat-listp (flatten-list l))))
+(check= (flatten-list nil) nil)
+(check= (flat-listp nil) t)
+#|
+
 ;; proof                        
 (flat-listp (flatten-list l))
 
@@ -704,6 +719,19 @@ c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
 c7. (flat-listp (flatten-list (first l))) {MP, c3, c5}
 
 ;; test?
+|#
+(test?
+ (implies (and (listp l)
+              (nelistp l)
+              (nelistp (first l))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+         (flat-listp (flatten-list l))))
+(check= (flat-listp (flatten-list (list (list 1) 1 1))) t)
+(check= (flat-listp (flatten-list (list (list (list 1) 1) 1 1))) t)
+#|
+
 ;; proof
 (flat-listp (flatten-list l))
 
@@ -750,6 +778,19 @@ c5. (implies (and (nelistp l)(nelistp (first l)))
 ................................................................
 c6. (flat-listp (flatten-list (rest l))) {MP, c4, c2}
 c7. c5 is useless {implies, c3, c5}
+
+;; test
+|#
+(test? 
+ (implies (and (listp l)
+              (nelistp l)
+              (not (nelistp (first l)))
+              (implies (nelistp l)(flat-listp (flatten-list (rest l))))
+              (implies (and (nelistp l)(nelistp (first l)))
+                       (flat-listp (flatten-list (first l)))))
+         (flat-listp (flatten-list l))))
+(check= (flat-listp (flatten-list (list 1 1 1))) t)
+#|
 
 ;; proof
 (flat-listp (flatten-list l))
@@ -832,6 +873,7 @@ Here's the given prime method.
 
 (defdata lop (listof pos))
 
+(set-defunc-termination-strictp nil)
 ;; factors1: pos x pos -> lop
 ;; (factors1 n v) finds the factors of n
 ;; Since primes will never be even, increase
@@ -844,6 +886,10 @@ Here's the given prime method.
     (if (natp (/ n v))
       (cons v (factors1 n (+ v 2)))
       (factors1 n (+ v 2)))))
+
+;; examples
+(factors1 9 1) ;; (1 3 9)
+(factors1 6 1) ;; (1 3)
 
 a) Is there something wrong with this approach if we assume v starts at 1?  
 If yes, give an input that will cause a problem. If no then give Professor Sprague 
@@ -874,7 +920,9 @@ You may need a helper function. Also, don't worry too much about efficiency.
 ;; I don't want you spending time getting this admitted into ACL2s.
 :program
 
-
+;; factors-helper: Pos Pos -> Lop
+;; takes a number n and a potential factor v and returns a list of factors of n
+;; if v is initially 2 then this gives the prime factors, excluding 1
 (defunc factors-helper (n v)
     :input-contract (and (posp n) (posp v))
     :output-contract (lopp (factors-helper n v))
@@ -883,6 +931,11 @@ You may need a helper function. Also, don't worry too much about efficiency.
         (if (posp (/ n v))
           (cons v (factors-helper (/ n v) 2))
           (factors-helper n (+ v 1)))))
+(check= (factors-helper 1 2) nil)
+(check= (factors-helper 4 2) (list 2 2))
+(check= (factors-helper 4 4) (list 4))
+(check= (factors-helper 12 2) (list 2 2 3))
+(check= (factors-helper 12 6) (list 6 2))
 
 ;; DEFINE
 ;; factors : Pos -> Lop
@@ -895,6 +948,7 @@ You may need a helper function. Also, don't worry too much about efficiency.
       (list 1)
       (factors-helper n 2)))
 
+        
     
 
 ;; Note the factors for 12 *could* be listed as 1 2 3 4 6 12 but
@@ -951,9 +1005,11 @@ You may need a helper function. Also, don't worry too much about efficiency.
     (endp (intersect (factors a) (factors b))))
 
 ;; this line is for ACL2s
-(sig intersect ((listof :b) (listof :b)) => (listof :b))
+(sig intersect ((listof :b) (listof :b)) => (listof :b))#|ACL2s-ToDo-Line|#
 
 
+;; mult-primes: lop -> natp
+;; takes a list of pos and multiplies them all together
 (defunc mult-primes (l) 
     :input-contract (lopp l)
     :output-contract (natp (mult-primes l))
@@ -981,8 +1037,7 @@ You may need a helper function. Also, don't worry too much about efficiency.
 (check= (gcd 30 28) 2)
 (check= (gcd 35 28) 7)
 (test? (implies (and (posp a)(posp b))
-                (equal (gcd a b)(gcd b a))))#|ACL2s-ToDo-Line|#
-
+                (equal (gcd a b)(gcd b a))))
 #|
 
 c) Perform contract completion on the following:
@@ -992,7 +1047,8 @@ A1: (iff (in b (factors a)) (integerp (/ a b)))
 * iff is "if and only if" in case you forgot
 What is this equivalent to (there are multiple things).
 (iff a b) is equivalent to (and (implies a b) (implies b a))
-
+(iff a b) is equivalent to (equal a b)
+(iff a b) is equivalent to (xnor a b)
 
 (and (implies (in b (factors a)) (integerp (/ a b)))
      (implies (integerp (/ a b)) (in b (factors a))))
@@ -1012,6 +1068,7 @@ d) (implies (and (posp a) (posp b) (posp c)
             (coprime b c))
 
  counter example: a = 2, b = 9, c = 6
+ 9 and 6 are not coprime
 
 e)  (implies (and (posp a)(posp b))
              (iff (equal (gcd a b) 1)
@@ -1061,22 +1118,37 @@ f) (implies (and (posp a) (posp b) (posp c)
 
             
             
+;; contexts
+c1. posp a
+c2. posp b
+c3. posp c
+c4. in b (factors a)
+.....................
+c5. integerp (/ a b) {a1, c1, c2, c4}
+
+;; proof
+(in b (factors (* a c))
+
+={def. factors}
+(in b (factors-helper (* a c) 2)
+
+={def. factors-helper}
+(in b
+    (if (> 2 (* a c))
+        nil
+        (if (posp (/ (*a c) 2))
+          (cons 2 (factors-helper (/ (* a c) 2) 2))
+          (factors-helper (* a c) (+ 2 1)))))
           
 (equals (factors (* a c)) (append (factors a) factors c))
 
 (factors a) is a subset of (factors (* a c)), so if b is in (factors a) it must be in (factors (* a c))
-
-      (if (> v n)
-        nil
-        (if (posp (/ n v))
-          (cons v (factors-helper (/ n v) 2))
-          (factors-helper n (+ v 1)))))
           
 g) (implies (and (posp n) (natp (/ n 6))
             (>= (len (factors n)) 2)))
 
 
-The factor list of any number divisable by 6 will contain 2 and 3. THerefor this factor list must be contain 
+The factor list of any number divisable by 6 will contain 2 and 3. Therefore this factor list must be contain 
 at least two numbers
             
 |#
