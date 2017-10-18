@@ -192,9 +192,11 @@ lecture notes. An example of test? is the following.
 (check= (pure-listp nil) t)
 (check= (pure-listp (cons 1 2)) nil)
 (check= (pure-listp 4) nil)
-(check= (pure-listp (list 1 2 (list 3 (cons 4 3)))) nil)#|ACL2s-ToDo-Line|#
-
+(check= (pure-listp (list 1 2 (list 3 (cons 4 3)))) nil)
 ;; Add more tests
+(check= (pure-listp (list (cons 1 2) (cons 2 4))) nil)
+(check= (pure-listp (list nil nil nil)) t)
+(check= (pure-listp (list 1 2 (list 1 2) (list 4 4))) t)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Count the number of times that e occurs in a pure list
@@ -216,7 +218,14 @@ lecture notes. An example of test? is the following.
 (check= (count 2 (list 2 (list 1 2 (list 3 2)))) 3)
 (check= (count 2 (list 2 (list (list 3 2) 1) 3)) 2)
 ;; Add more tests
-
+(check= (count nil nil) 0)
+(check= (count 1 nil) 0)
+(check= (count 1 (list nil nil nil)) 0)
+(check= (count 1 (list (list 1) (list 1) (list (list 1)))) 3)
+(check= (count (list 1) (list (list 1))) 1)
+(test? (implies (and (pure-listp l) (in x l)) (> (count x l) 0)))
+        
+ 
 :logic
 
 ; odd-even ratio
@@ -235,13 +244,43 @@ lecture notes. An example of test? is the following.
  ; datatype to make the code modular and readable
  
  
+
+ ;; returns true if n is divisible by 2
+(defunc evenp (n)
+  :input-contract (natp n)
+  :output-contract (booleanp (evenp n))
+  (natp (/ n 2)))
+  
+ (check= (evenp 2) t)
+ (check= (evenp 0) t)
+ (check= (evenp 2000) t)
+ (check= (evenp 1) nil)
+ 
+ ;; returns the number of even nats in the list
+ (defunc count-evens (l)
+   :input-contract (natlistp l)
+   :output-contract (natp (count-evens l))
+   (cond ((endp l) 0)
+         ((evenp (first l)) (+ 1 (count-evens (rest l))))
+         (t (count-evens (rest l)))))
+ (check= (count-evens nil) 0)
+ (check= (count-evens (list 1)) 0)
+ (check= (count-evens (list 1 2)) 1)
+ (check= (count-evens (list 2 4 6 8 0)) 5)
+ (test? (implies (natlistp l) (>= (len l) (count-evens l))))
+ 
 ; odd-even-ratio: Natlist -> Rational
 ; takes in a natlist and returns the ratio of the sum of odd
 ; numbers in the list to the sum of even numbers in the list.
 ; If the sum of even numbers is 0, return 1
 (defunc odd-even-ratio (l)
   :input-contract (natlistp l)
-...........)
+  :output-contract (rationalp (odd-even-ratio l))
+    (let* ((num-evens (count-evens l))
+           (num-odds (- (len l) num-evens)))
+      (if (equal num-evens 0) 1
+        (/ num-odds num-evens))))#|ACL2s-ToDo-Line|#
+
 
 (check= (odd-even-ratio '(1 2 3 4 5 6)) (/ 9 12))
 (check= (odd-even-ratio '(3 2 5 4 6 1)) (/ 3 4))
@@ -324,20 +363,21 @@ lecture notes. An example of test? is the following.
 ;; access to a procedure IS_VALID(f) that can check if the input propositional
 ;; formula f is valid. How do we build IS_UNSAT(F)? An explanation in English is fine.
 ;; Hint: we can use propositional logic connectives ...
-;......................
+;IS_VALID(not f)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;PART III. EQUATIONAL REASONING
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #|
+|#
 (defunc foo (m n)
   :input-contract (and (natp m) (natp n))
   :output-contract (natp (foo m n))
   (cond ((equal m 0) (+ n 1))
         ((equal n 0) (foo (- m 1) 1))
         (t (foo (- m 1) (foo m (- n 1))))))
-
+#|
 1. Prove the following using equational reasoning:
 
 (not (or (not (implies (natp n)
@@ -347,7 +387,7 @@ lecture notes. An example of test? is the following.
  
                        (equal (foo 1 n) (+ 2 n))))))
 |#
-;......................
+
 
 #|
 2. Prove the following using equational reasoning:
@@ -358,7 +398,46 @@ lecture notes. An example of test? is the following.
                        (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
          (equal (foo 1 n) (+ 2 n)))
 
-;......................
+contract completion: ok
+
+tests
+(equal (foo 1 2) (+ 2 2))
+|#
+(test? (implies (and (natp n)
+              (not (equal n 0))
+              (implies (natp (- n 1))
+                       (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
+         (equal (foo 1 n) (+ 2 n))))
+#|
+         
+c1. natp n
+c2. not equal n 0
+c3. (implies (natp (- n 1))
+                       (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
+......................
+c4. (equal (foo 1 (- n 1)) (+ 2 (- n 1))) {c1, c2, arithmetic, c3, MP}
+c5. (equal (foo 1 (- n 1)) (+ n 1)) {arithmetic}
+
+proof
+(equal (foo 1 n) (+ 2 n))
+
+={def. foo, if-axioms}
+(equal (foo (- 1 1) (foo 1 (- n 1)))
+       (+ 2 n))
+
+={def. foo, arithmetic} ;; foo where m == 0
+(equal (+ 1 (foo 1 (- n 1)))
+       (+ 2 n))
+
+={c5}
+(equal (+ 1 (+ n 1))
+       (+ 2 n))
+       
+={arithmetic}
+(equal (+ 2 n) (+ 2 n)
+
+={reflexivity}
+t
 |#
 
 #|
