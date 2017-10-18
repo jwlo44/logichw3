@@ -206,7 +206,12 @@ lecture notes. An example of test? is the following.
 ; either in the list itself, or in an list in the list, to any
 ; number of levels.
 (defunc count (e l)
-  ...............)
+  :input-contract (pure-listp l)
+  :output-contract (natp (count e l))
+  (cond ((endp l) 0)
+        ((equal (first l) e) (+ 1 (count e (rest l))))
+        ((atom (first l)) (count e (rest l)))
+        (t (+ (count e (first l)) (count e (rest l))))))
 
 (check= (count 2 (list 2 (list 1 2 (list 3 2)))) 3)
 (check= (count 2 (list 2 (list (list 3 2) 1) 3)) 2)
