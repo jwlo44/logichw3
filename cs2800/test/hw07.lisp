@@ -565,13 +565,13 @@ contract completion: ok
 
 tests
 (equal (foo 1 2) (+ 2 2))
-|#
+
 (test? (implies (and (natp n)
               (not (equal n 0))
               (implies (natp (- n 1))
                        (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
          (equal (foo 1 n) (+ 2 n))))
-#|
+
          
 c1. natp n
 c2. not equal n 0
@@ -626,8 +626,7 @@ seen(such as +, -, *, and /).
 
 (implies (natp n)
          (equal (foo 2 n)
-                   (if ((equal n 0) 3
-                       (+ (foo 2 (- n 1)) 2)))))
+                (+ 3 n)))
 |#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The following equational reasoning problem (Question 4) is for extra practice, and
