@@ -85,7 +85,7 @@ If your group does not already exist:
    it will cost you points, so please read carefully.
 
 
-Names of ALL group members: FirstName1 LastName1, FirstName2 LastName2, ...
+Names of ALL group members: Julia Wlochowski, Dylan Wight
 
 Note: There will be a 10 pt penalty if your names do not follow
 this format.
@@ -183,11 +183,9 @@ lecture notes. An example of test? is the following.
   :input-contract t
   :output-contract (booleanp (pure-listp l))
   (if (listp l)
-    (if (endp l)
-      t
-      (and (if (listp (first l))
-             (pure-listp (first l))
-             t)
+    (if (endp l) t
+      (and (or (atom (first l))
+               (pure-listp (first l)))
            (pure-listp (rest l))))
     nil))
 
@@ -196,7 +194,9 @@ lecture notes. An example of test? is the following.
 (check= (pure-listp 4) nil)
 (check= (pure-listp (list 1 2 (list 3 (cons 4 3)))) nil)
 ;; Add more tests
-
+(check= (pure-listp (list (cons 1 2) (cons 2 4))) nil)
+(check= (pure-listp (list nil nil nil)) t)
+(check= (pure-listp (list 1 2 (list 1 2) (list 4 4))) t)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Count the number of times that e occurs in a pure list
@@ -208,12 +208,24 @@ lecture notes. An example of test? is the following.
 ; either in the list itself, or in an list in the list, to any
 ; number of levels.
 (defunc count (e l)
-  ...............)
+  :input-contract (pure-listp l)
+  :output-contract (natp (count e l))
+  (cond ((endp l) 0)
+        ((equal (first l) e) (+ 1 (count e (rest l))))
+        ((atom (first l)) (count e (rest l)))
+        (t (+ (count e (first l)) (count e (rest l))))))
 
 (check= (count 2 (list 2 (list 1 2 (list 3 2)))) 3)
 (check= (count 2 (list 2 (list (list 3 2) 1) 3)) 2)
 ;; Add more tests
-
+(check= (count nil nil) 0)
+(check= (count 1 nil) 0)
+(check= (count 1 (list nil nil nil)) 0)
+(check= (count 1 (list (list 1) (list 1) (list (list 1)))) 3)
+(check= (count (list 1) (list (list 1))) 1)
+(test? (implies (and (pure-listp l) (in x l)) (> (count x l) 0)))
+        
+ 
 :logic
 
 ; odd-even ratio
@@ -232,17 +244,65 @@ lecture notes. An example of test? is the following.
  ; datatype to make the code modular and readable
  
  
+
+ ;; returns true if n is divisible by 2
+(defunc evenp (n)
+  :input-contract (natp n)
+  :output-contract (booleanp (evenp n))
+  (natp (/ n 2)))
+  
+ (check= (evenp 2) t)
+ (check= (evenp 0) t)
+ (check= (evenp 2000) t)
+ (check= (evenp 1) nil)
+ 
+ ;; returns the sum of even nats in the list
+ (defunc sum-evens (l)
+   :input-contract (natlistp l)
+   :output-contract (natp (sum-evens l))
+   (cond ((endp l) 0)
+         ((evenp (first l)) (+ (first l) (sum-evens (rest l))))
+         (t (sum-evens (rest l)))))
+ 
+ (check= (sum-evens nil) 0)
+ (check= (sum-evens (list 1)) 0)
+ (check= (sum-evens (list 1 2)) 2)
+ (check= (sum-evens (list 2 4 6 8 0)) 20)
+ 
+ 
+  ;; returns the sum of odd nats in the list
+ (defunc sum-odds (l)
+   :input-contract (natlistp l)
+   :output-contract (natp (sum-odds l))
+   (cond ((endp l) 0)
+         ((not (evenp (first l))) (+ (first l) (sum-odds (rest l))))
+         (t (sum-odds (rest l)))))
+ 
+ (check= (sum-odds nil) 0)
+ (check= (sum-odds (list 0)) 0)
+ (check= (sum-odds (list 1 2)) 1)
+ (check= (sum-odds (list 1 3 5 7 9)) 25)
+ 
+ 
 ; odd-even-ratio: Natlist -> Rational
 ; takes in a natlist and returns the ratio of the sum of odd
 ; numbers in the list to the sum of even numbers in the list.
 ; If the sum of even numbers is 0, return 1
 (defunc odd-even-ratio (l)
   :input-contract (natlistp l)
-...........)
+  :output-contract (rationalp (odd-even-ratio l))
+      (if (equal (sum-evens l) 0) 1
+        (/ (sum-odds l) (sum-evens l))))
 
 (check= (odd-even-ratio '(1 2 3 4 5 6)) (/ 9 12))
 (check= (odd-even-ratio '(3 2 5 4 6 1)) (/ 3 4))
 ;; Add more tests
+(check= (odd-even-ratio nil) 1)
+(check= (odd-even-ratio '(1)) 1)
+(check= (odd-even-ratio '(1 0)) 1)
+(check= (odd-even-ratio '(1 1 2)) 1)
+(check= (odd-even-ratio '(2)) 0)
+(check= (odd-even-ratio '(5 2 0)) (/ 5 2))
 
 :logic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -258,9 +318,9 @@ lecture notes. An example of test? is the following.
   :output-contract (integerp (f x))
   (if (equal x 1)
     9
-    (- 10 (f (- x 2)))))
+    (- 10 (f (- x 2))))) ;; violation here
     
-    body contract violation, if f is called with 2, will call itself with 0, which is not a posp.
+    body contract violation: (f 2) will call (f 0), and 0 is not a posp so the input contract of f is violated.
 |#
 
 
@@ -271,7 +331,9 @@ lecture notes. An example of test? is the following.
   :output-contract (listp (f x y))
   (if (equal y 1)
     nil
-    (f (list (first x)) (- y 1))))
+    (f (list (first x)) (- y 1)))) ;; violation on (first x)
+    
+    body contract violation: (f nil 2) will call (first nil) which is an input contract violation for first 
 |#
 
 #|
@@ -279,9 +341,13 @@ lecture notes. An example of test? is the following.
   :input-contract (and (listp x) (listp y))
   :output-contract (posp (f x y))
   (if (endp x)
-    0
+    0 ;; violation
     (+ 1 (f (rest x) y))))
+    
+    function contract violation: (f nil nil) will return the first if branch, 
+    but 0 is not a posp which violates the output contract for f
 |#
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;PART II. PROPOSITIONAL LOGIC
@@ -291,27 +357,113 @@ lecture notes. An example of test? is the following.
 ;; thus ~(A \/ ~B) should be simplified to ~A /\ B.  Parentheses do not count as operators.
 
 ;1. ~(p=>q) \/ ~(q=>p)
-;......................
+#|
+~(p=>q) \/ ~(q=>p)
+
+={def. implies}
+~(~p \/ q) \/ ~(~q \/ p)
+
+={de morgan}
+(p /\ ~q) \/ (q /\ ~p)
+
+={def. xor/eqaul}
+p <> q
+
+|#
 
 ;2. q => (((p \/ q) /\ p) /\ ((p /\ q) \/ q) )
-;......................
+#|
+q => (((p \/ q) /\ p) /\ ((p /\ q) \/ q) )
 
+={(p \/ q) /\ p  = p}
+q => (p /\ ((p /\ q) \/ q))
 
+={((p /\ q) \/ q) = q}
+q => (p /\ q)
+
+={distribute}
+(q => p) /\ (q => q)
+
+={q => q = t, identity}
+q => p
+
+|#
 ;3. p => (~q \/ r \/ ((q => r) /\ p))
-;......................
+#|
+p => (~q \/ r \/ ((q => r) /\ p))
+
+={def. implies}
+p => (~q \/ r \/ ((~q \/ r) /\ p))
+
+={(q \/ (q /\ p)) = q|instantiate: ((q (~ q \/ r)))}
+p => (~ q \/ r)
+
+={implies def.}
+p => (q => r)
+
+={exportation}
+(p /\ q) => r
+|#
 
 
 ;4. ~(r => ~q) \/ ~(p => ~r)
-;......................
+#|
+~(r => ~q) \/ ~(p => ~r)
+
+={def. implies}
+~(~r \/ ~q) \/ ~(~p \/ ~r)
+
+={de morgan}
+(r /\ q) \/ (p /\ r)
+
+={distribute}
+(q \/ p) /\ r
+
+|#
 
 ;5. ~((p => q) /\ ~r)
-;......................
+#|
+~((p => q) /\ ~r)
 
+={de morgan}
+~(p => q) \/ r
+
+={def. implies}
+~(~p \/ q) \/ r
+
+={de morgan}
+p /\ ~q \/ r
+
+|#
 ;6.  p => p => p
-;......................
+#|
+p => p => p
+
+={p => p = t}
+p => t
+
+={p => t = t}
+t
+|#
 
 ;7. ((p <=> q) <=> (p <> q)) => ((p \/ q) => (q=>p))
-;......................
+
+#|
+((p <=> q) <=> (p <> q)) => ((p \/ q) => (q=>p))
+
+={(p <=> q) = (p = q)}
+((p = q) = (p <> q)) => ((p \/ q) => (q=>p))
+
+={p <> q = ~(p = q)}
+((p = q) = ~(p = q)) => ((p \/ q) => (q=>p))
+
+={(r = ~r) = nil |instantiate: ((r (p = q)))}
+nil => ((p \/ q) => (q=>p))
+
+={nil => r = t}
+t
+
+|#
 
 
 ;;----------------------------------------------
@@ -321,20 +473,23 @@ lecture notes. An example of test? is the following.
 ;; access to a procedure IS_VALID(f) that can check if the input propositional
 ;; formula f is valid. How do we build IS_UNSAT(F)? An explanation in English is fine.
 ;; Hint: we can use propositional logic connectives ...
-;......................
 
+;IS_VALID(not f)
+;; if the inverse of f is always true, then f must be always false, aka unsatisfiable.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;PART III. EQUATIONAL REASONING
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #|
+|#
 (defunc foo (m n)
   :input-contract (and (natp m) (natp n))
   :output-contract (natp (foo m n))
   (cond ((equal m 0) (+ n 1))
         ((equal n 0) (foo (- m 1) 1))
-        (t (foo (- m 1) (foo m (- n 1))))))
+        (t (foo (- m 1) (foo m (- n 1))))))#|ACL2s-ToDo-Line|#
 
+#|
 1. Prove the following using equational reasoning:
 
 (not (or (not (implies (natp n)
@@ -343,10 +498,61 @@ lecture notes. An example of test? is the following.
                              (equal n 0))
  
                        (equal (foo 1 n) (+ 2 n))))))
-|#
-;......................
 
-#|
+
+(and (implies (natp n)
+              (equal (foo 0 n) (+ 1 n)))
+     (implies (and (natp n) (equal n 0))
+              (equal (foo 1 n) (+ 2 n))))
+
+this is just two proof obligations:
+1.1. (implies (natp n)
+              (equal (foo 0 n) (+ 1 n)))
+
+1.2. (implies (and (natp n) (equal n 0))
+              (equal (foo 1 n) (+ 2 n))))
+
+              
+proof for 1.1              
+              
+contract completion: foo takes a natp which is already in the implies
+
+contexts
+c1. natp n
+
+proof
+(equal (foo 0 n) (+ 1 n))
+
+={def. foo, if axioms}
+ (equal (+ n 1) (+ 1 n)
+={arithmetic}
+true
+              
+proof 1.2
+
+contract completion: we're good
+contexts
+c1. natp n
+c2. n = 0
+
+proof
+(equal (foo 1 n) (+ 2 n))
+
+={def. foo, if axioms, c2}
+(equal (foo (- 1 1) 1) (+ 2 0))
+
+={arithmetic}
+(equal (foo 0 1) 2)
+
+={def. foo, if-axioms}
+(equal (+ 1 1) 2)
+
+={arithmetic}
+t
+
+proof for all of problem 1:
+since both proof obligations are true, problem 1 is true.
+         
 2. Prove the following using equational reasoning:
 
 (implies (and (natp n)
@@ -355,7 +561,46 @@ lecture notes. An example of test? is the following.
                        (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
          (equal (foo 1 n) (+ 2 n)))
 
-;......................
+contract completion: ok
+
+tests
+(equal (foo 1 2) (+ 2 2))
+|#
+(test? (implies (and (natp n)
+              (not (equal n 0))
+              (implies (natp (- n 1))
+                       (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
+         (equal (foo 1 n) (+ 2 n))))
+#|
+         
+c1. natp n
+c2. not equal n 0
+c3. (implies (natp (- n 1))
+                       (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
+.......................................................................
+c4. (equal (foo 1 (- n 1)) (+ 2 (- n 1))) {c1, c2, arithmetic, c3, MP}
+c5. (equal (foo 1 (- n 1)) (+ n 1)) {arithmetic}
+
+proof
+(equal (foo 1 n) (+ 2 n))
+
+={def. foo, if-axioms}
+(equal (foo (- 1 1) (foo 1 (- n 1)))
+       (+ 2 n))
+
+={def. foo, arithmetic} ;; foo where m == 0
+(equal (+ 1 (foo 1 (- n 1)))
+       (+ 2 n))
+
+={c5}
+(equal (+ 1 (+ n 1))
+       (+ 2 n))
+       
+={arithmetic}
+(equal (+ 2 n) (+ 2 n)
+
+={reflexivity}
+t
 |#
 
 #|
@@ -376,11 +621,14 @@ seen(such as +, -, *, and /).
 ***Note that you do not have to prove anything.***
 |#
 #|
-(implies (natp n)
+(implies ...
          (equal (foo 2 n) ...))
-;......................
-|#
 
+(implies (natp n)
+         (equal (foo 2 n)
+                   (if ((equal n 0) 3
+                       (+ (foo 2 (- n 1)) 2)))))
+|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The following equational reasoning problem (Question 4) is for extra practice, and
 ; will not be graded
