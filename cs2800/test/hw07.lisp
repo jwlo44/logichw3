@@ -302,10 +302,10 @@ lecture notes. An example of test? is the following.
 (check= (odd-even-ratio '(1 0)) 1)
 (check= (odd-even-ratio '(1 1 2)) 1)
 (check= (odd-even-ratio '(2)) 0)
-(check= (odd-even-ratio '(5 2 0)) (/ 5 2))#|ACL2s-ToDo-Line|#
-
+(check= (odd-even-ratio '(5 2 0)) (/ 5 2))
 
 :logic
+#|ACL2s-ToDo-Line|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CONTRACTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -319,9 +319,9 @@ lecture notes. An example of test? is the following.
   :output-contract (integerp (f x))
   (if (equal x 1)
     9
-    (- 10 (f (- x 2)))))
+    (- 10 (f (- x 2))))) ;; violation here
     
-    body contract violation, if f is called with 2, will call itself with 0, which is not a posp.
+    body contract violation: (f 2) will call (f 0), and 0 is not a posp so the input contract of f is violated.
 |#
 
 
@@ -332,7 +332,9 @@ lecture notes. An example of test? is the following.
   :output-contract (listp (f x y))
   (if (equal y 1)
     nil
-    (f (list (first x)) (- y 1))))
+    (f (list (first x)) (- y 1)))) ;; violation on (first x)
+    
+    body contract violation: (f nil 2) will call (first nil) which is an input contract violation for first 
 |#
 
 #|
@@ -340,9 +342,13 @@ lecture notes. An example of test? is the following.
   :input-contract (and (listp x) (listp y))
   :output-contract (posp (f x y))
   (if (endp x)
-    0
+    0 ;; violation
     (+ 1 (f (rest x) y))))
+    
+    function contract violation: (f nil nil) will return the first if branch, 
+    but 0 is not a posp which violates the output contract for f
 |#
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;PART II. PROPOSITIONAL LOGIC
