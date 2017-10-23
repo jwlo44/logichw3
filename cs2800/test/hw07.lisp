@@ -305,7 +305,6 @@ lecture notes. An example of test? is the following.
 (check= (odd-even-ratio '(5 2 0)) (/ 5 2))
 
 :logic
-#|ACL2s-ToDo-Line|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CONTRACTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -488,7 +487,8 @@ t
   :output-contract (natp (foo m n))
   (cond ((equal m 0) (+ n 1))
         ((equal n 0) (foo (- m 1) 1))
-        (t (foo (- m 1) (foo m (- n 1))))))
+        (t (foo (- m 1) (foo m (- n 1))))))#|ACL2s-ToDo-Line|#
+
 #|
 1. Prove the following using equational reasoning:
 
@@ -498,10 +498,61 @@ t
                              (equal n 0))
  
                        (equal (foo 1 n) (+ 2 n))))))
-|#
 
 
-#|
+(and (implies (natp n)
+              (equal (foo 0 n) (+ 1 n)))
+     (implies (and (natp n) (equal n 0))
+              (equal (foo 1 n) (+ 2 n))))
+
+this is just two proof obligations:
+1.1. (implies (natp n)
+              (equal (foo 0 n) (+ 1 n)))
+
+1.2. (implies (and (natp n) (equal n 0))
+              (equal (foo 1 n) (+ 2 n))))
+
+              
+proof for 1.1              
+              
+contract completion: foo takes a natp which is already in the implies
+
+contexts
+c1. natp n
+
+proof
+(equal (foo 0 n) (+ 1 n))
+
+={def. foo, if axioms}
+ (equal (+ n 1) (+ 1 n)
+={arithmetic}
+true
+              
+proof 1.2
+
+contract completion: we're good
+contexts
+c1. natp n
+c2. n = 0
+
+proof
+(equal (foo 1 n) (+ 2 n))
+
+={def. foo, if axioms, c2}
+(equal (foo (- 1 1) 1) (+ 2 0))
+
+={arithmetic}
+(equal (foo 0 1) 2)
+
+={def. foo, if-axioms}
+(equal (+ 1 1) 2)
+
+={arithmetic}
+t
+
+proof for all of problem 1:
+since both proof obligations are true, problem 1 is true.
+         
 2. Prove the following using equational reasoning:
 
 (implies (and (natp n)
@@ -526,7 +577,7 @@ c1. natp n
 c2. not equal n 0
 c3. (implies (natp (- n 1))
                        (equal (foo 1 (- n 1)) (+ 2 (- n 1)))))
-......................
+.......................................................................
 c4. (equal (foo 1 (- n 1)) (+ 2 (- n 1))) {c1, c2, arithmetic, c3, MP}
 c5. (equal (foo 1 (- n 1)) (+ n 1)) {arithmetic}
 
@@ -570,11 +621,14 @@ seen(such as +, -, *, and /).
 ***Note that you do not have to prove anything.***
 |#
 #|
-(implies (natp n)
+(implies ...
          (equal (foo 2 n) ...))
-;......................
-|#
 
+(implies (natp n)
+         (equal (foo 2 n)
+                   (if ((equal n 0) 3
+                       (+ (foo 2 (- n 1)) 2)))))
+|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; The following equational reasoning problem (Question 4) is for extra practice, and
 ; will not be graded
