@@ -358,27 +358,113 @@ lecture notes. An example of test? is the following.
 ;; thus ~(A \/ ~B) should be simplified to ~A /\ B.  Parentheses do not count as operators.
 
 ;1. ~(p=>q) \/ ~(q=>p)
-;......................
+#|
+~(p=>q) \/ ~(q=>p)
+
+={def. implies}
+~(~p \/ q) \/ ~(~q \/ p)
+
+={de morgan}
+(p /\ ~q) \/ (q /\ ~p)
+
+={def. xor/eqaul}
+p <> q
+
+|#
 
 ;2. q => (((p \/ q) /\ p) /\ ((p /\ q) \/ q) )
-;......................
+#|
+q => (((p \/ q) /\ p) /\ ((p /\ q) \/ q) )
 
+={(p \/ q) /\ p  = p}
+q => (p /\ ((p /\ q) \/ q))
 
+={((p /\ q) \/ q) = q}
+q => (p /\ q)
+
+={distribute}
+(q => p) /\ (q => q)
+
+={q => q = t, identity}
+q => p
+
+|#
 ;3. p => (~q \/ r \/ ((q => r) /\ p))
-;......................
+#|
+p => (~q \/ r \/ ((q => r) /\ p))
+
+={def. implies}
+p => (~q \/ r \/ ((~q \/ r) /\ p))
+
+={(q \/ (q /\ p)) = q|instantiate: ((q (~ q \/ r)))}
+p => (~ q \/ r)
+
+={implies def.}
+p => (q => r)
+
+={exportation}
+(p /\ q) => r
+|#
 
 
 ;4. ~(r => ~q) \/ ~(p => ~r)
-;......................
+#|
+~(r => ~q) \/ ~(p => ~r)
+
+={def. implies}
+~(~r \/ ~q) \/ ~(~p \/ ~r)
+
+={de morgan}
+(r /\ q) \/ (p /\ r)
+
+={distribute}
+(q \/ p) /\ r
+
+|#
 
 ;5. ~((p => q) /\ ~r)
-;......................
+#|
+~((p => q) /\ ~r)
 
+={de morgan}
+~(p => q) \/ r
+
+={def. implies}
+~(~p \/ q) \/ r
+
+={de morgan}
+p /\ ~q \/ r
+
+|#
 ;6.  p => p => p
-;......................
+#|
+p => p => p
+
+={p => p = t}
+p => t
+
+={p => t = t}
+t
+|#
 
 ;7. ((p <=> q) <=> (p <> q)) => ((p \/ q) => (q=>p))
-;......................
+
+#|
+((p <=> q) <=> (p <> q)) => ((p \/ q) => (q=>p))
+
+={(p <=> q) = (p = q)}
+((p = q) = (p <> q)) => ((p \/ q) => (q=>p))
+
+={p <> q = ~(p = q)}
+((p = q) = ~(p = q)) => ((p \/ q) => (q=>p))
+
+={(r = ~r) = nil |instantiate: ((r (p = q)))}
+nil => ((p \/ q) => (q=>p))
+
+={nil => r = t}
+t
+
+|#
 
 
 ;;----------------------------------------------
@@ -388,8 +474,9 @@ lecture notes. An example of test? is the following.
 ;; access to a procedure IS_VALID(f) that can check if the input propositional
 ;; formula f is valid. How do we build IS_UNSAT(F)? An explanation in English is fine.
 ;; Hint: we can use propositional logic connectives ...
-;IS_VALID(not f)
 
+;IS_VALID(not f)
+;; if the inverse of f is always true, then f must be always false, aka unsatisfiable.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;PART III. EQUATIONAL REASONING
