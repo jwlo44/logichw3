@@ -254,7 +254,8 @@ lecture notes. An example of test? is the following.
  (check= (evenp 2) t)
  (check= (evenp 0) t)
  (check= (evenp 2000) t)
- (check= (evenp 1) nil)
+ (check= (evenp 1) nil)#|ACL2s-ToDo-Line|#
+
  
  ;; returns the number of even nats in the list
  (defunc count-evens (l)
@@ -279,8 +280,7 @@ lecture notes. An example of test? is the following.
     (let* ((num-evens (count-evens l))
            (num-odds (- (len l) num-evens)))
       (if (equal num-evens 0) 1
-        (/ num-odds num-evens))))#|ACL2s-ToDo-Line|#
-
+        (/ num-odds num-evens))))
 
 (check= (odd-even-ratio '(1 2 3 4 5 6)) (/ 9 12))
 (check= (odd-even-ratio '(3 2 5 4 6 1)) (/ 3 4))
