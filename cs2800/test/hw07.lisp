@@ -254,8 +254,7 @@ lecture notes. An example of test? is the following.
  (check= (evenp 2) t)
  (check= (evenp 0) t)
  (check= (evenp 2000) t)
- (check= (evenp 1) nil)#|ACL2s-ToDo-Line|#
-
+ (check= (evenp 1) nil)
  
  ;; returns the number of even nats in the list
  (defunc count-evens (l)
@@ -548,7 +547,8 @@ by ACL2s before).
   (if (equal x 1)
       9
     (f (+ 10 (f (- x 1))))))
-;......................
+    
+; inadmissisble, non-terminating
 
 2. (defunc f (x)
   :input-contract (integerp x)
@@ -556,7 +556,16 @@ by ACL2s before).
   (if (>= x 0)
      (- (* x x) x)
      (+ x (* x x))))
-;......................
+     
+; 1. the body contract holds because it calls >=, -, *, and + with integer values
+; 2. if x is a negative integer, a negative times a negative is positive, and subtracting a negative adds
+;    so the output must be positive. If x is a positive integeter adding itself to its square must be a 
+;    postive. If zero, the output will be zero.
+; 3. 
+(defunc measure (x)
+  :input-contract (integerp x)
+  :output-contract (integerp (f x))
+  0)
 
 3. (defunc f (x l)
   :input-contract (and (integerp x) (listp l))
@@ -566,7 +575,20 @@ by ACL2s before).
      (if (> x 0)
        (f (- x 1) (cons x l))
        (f (+ x 1) (cons x l)))))
-;......................
+
+       
+; 1. The body contract holds because cons of Any and a list must be a list. An integer 
+;    plus one or minus one is an integer.
+; 2. f always returns 0 which is a natp.
+; 3. 
+
+ (defunc measure (x l)
+  :input-contract (and (integerp x) (listp l))
+  :output-contract (natp (f x))
+  (if (< x 0) 
+      (- 0 x)
+      x)
+      
 
 4. (defunc f (x)
   :input-contract (integerp x)
@@ -574,5 +596,6 @@ by ACL2s before).
   (if (equal x 1)
     9
     (- 10 (f (- x 1)))))
-;......................
+
+ ; non terminating, when x < 1.
 |#
