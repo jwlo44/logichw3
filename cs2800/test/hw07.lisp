@@ -254,21 +254,35 @@ lecture notes. An example of test? is the following.
  (check= (evenp 2) t)
  (check= (evenp 0) t)
  (check= (evenp 2000) t)
- (check= (evenp 1) nil)#|ACL2s-ToDo-Line|#
-
+ (check= (evenp 1) nil)
  
- ;; returns the number of even nats in the list
- (defunc count-evens (l)
+ ;; returns the sum of even nats in the list
+ (defunc sum-evens (l)
    :input-contract (natlistp l)
-   :output-contract (natp (count-evens l))
+   :output-contract (natp (sum-evens l))
    (cond ((endp l) 0)
-         ((evenp (first l)) (+ 1 (count-evens (rest l))))
-         (t (count-evens (rest l)))))
- (check= (count-evens nil) 0)
- (check= (count-evens (list 1)) 0)
- (check= (count-evens (list 1 2)) 1)
- (check= (count-evens (list 2 4 6 8 0)) 5)
- (test? (implies (natlistp l) (>= (len l) (count-evens l))))
+         ((evenp (first l)) (+ (first l) (sum-evens (rest l))))
+         (t (sum-evens (rest l)))))
+ 
+ (check= (sum-evens nil) 0)
+ (check= (sum-evens (list 1)) 0)
+ (check= (sum-evens (list 1 2)) 2)
+ (check= (sum-evens (list 2 4 6 8 0)) 20)
+ 
+ 
+  ;; returns the sum of odd nats in the list
+ (defunc sum-odds (l)
+   :input-contract (natlistp l)
+   :output-contract (natp (sum-odds l))
+   (cond ((endp l) 0)
+         ((not (evenp (first l))) (+ (first l) (sum-odds (rest l))))
+         (t (sum-odds (rest l)))))
+ 
+ (check= (sum-odds nil) 0)
+ (check= (sum-odds (list 0)) 0)
+ (check= (sum-odds (list 1 2)) 1)
+ (check= (sum-odds (list 1 3 5 7 9)) 25)
+ 
  
 ; odd-even-ratio: Natlist -> Rational
 ; takes in a natlist and returns the ratio of the sum of odd
@@ -277,14 +291,19 @@ lecture notes. An example of test? is the following.
 (defunc odd-even-ratio (l)
   :input-contract (natlistp l)
   :output-contract (rationalp (odd-even-ratio l))
-    (let* ((num-evens (count-evens l))
-           (num-odds (- (len l) num-evens)))
-      (if (equal num-evens 0) 1
-        (/ num-odds num-evens))))
+      (if (equal (sum-evens l) 0) 1
+        (/ (sum-odds l) (sum-evens l))))
 
 (check= (odd-even-ratio '(1 2 3 4 5 6)) (/ 9 12))
 (check= (odd-even-ratio '(3 2 5 4 6 1)) (/ 3 4))
 ;; Add more tests
+(check= (odd-even-ratio nil) 1)
+(check= (odd-even-ratio '(1)) 1)
+(check= (odd-even-ratio '(1 0)) 1)
+(check= (odd-even-ratio '(1 1 2)) 1)
+(check= (odd-even-ratio '(2)) 0)
+(check= (odd-even-ratio '(5 2 0)) (/ 5 2))#|ACL2s-ToDo-Line|#
+
 
 :logic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
