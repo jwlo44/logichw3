@@ -84,7 +84,6 @@ terminates and produces a value, which then violates the output contract.
 Assume that these functions are being given to ACL2s in sequence. If a
 function is not admitted by ACL2s, you delete that function and begin to
 write the next one.
-|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 1.
@@ -233,7 +232,6 @@ write the next one.
 
 ; inadmissable, undefined function f12. Body is not a legal expression.
 
-|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; II. GUESSING A MEASURE
@@ -324,7 +322,7 @@ write the next one.
   (if (endp x)
       11
       (first x)))
-|#
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; III. PROVING A MEASURE
