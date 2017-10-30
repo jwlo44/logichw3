@@ -85,7 +85,7 @@ Assume that these functions are being given to ACL2s in sequence. If a
 function is not admitted by ACL2s, you delete that function and begin to
 write the next one.
 |#
-#|
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 1.
 (defunc f1 (a b)
@@ -95,7 +95,7 @@ write the next one.
         ((< a b)                       (f1 (- a 1) b))
         (t                             (f1 b a))))
 
-...................
+; inadmissable, non-termination, example ((a 2) (b 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 2.
@@ -106,7 +106,9 @@ write the next one.
     (list n)
     (f2 (cons (list (first x)) (rest x)) (- n 1))))
 
-...................
+; inadmissable, body contract violation
+; (x nil) will throw error on (first x) call
+; recursive call  for (n 1) will be with 0 which is not a posp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 3.
@@ -117,7 +119,8 @@ write the next one.
     0
     (+ 2 (f3 (- x 1)))))
 
-...................
+; inadmissable, body contract violation
+; (x 0) will call (f -1) which violates the input contract
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 4.
@@ -128,7 +131,8 @@ write the next one.
     nil
     (f4 (list (first x)) (- y 1))))
 
-...................
+; inadmissable, body contract violation
+; (nil 5) will call (first nil) which violates the input contract
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 5.
@@ -139,7 +143,7 @@ write the next one.
     nil
     (f5 (rest f))))
 
-...................
+; inadmissable, free occurance of variable f. Fuction body not a legal statement
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 6.
@@ -150,7 +154,8 @@ write the next one.
     0
     (f6 z (rest y) z)))
 
-...................
+; inadmissable, arguments are not distinct symbols. z appears twice
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 7.
 (defunc f7 (x y)
@@ -160,7 +165,7 @@ write the next one.
     0
     (+ (* 2 y) (f7 (- x 1) y))))
 
-...................
+; inadmissable, non-termination if x is less than zero. Ex. (x -1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 8.
@@ -171,7 +176,9 @@ write the next one.
     (len y)
     (f8 (rest x) y)))
 
-...................
+; inadmissable, funtion contract violation. ((x nil) (y nil)) => 0 which is not a posp
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 9.
@@ -182,7 +189,7 @@ write the next one.
     1
     (- 10 (f9 (- x 2)))))
 
-...................
+; inadmissable, body contract violation. (f9 2) will call itselg with (f9 0) which violates the input contact
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 10.
@@ -193,7 +200,7 @@ write the next one.
     4
     (- (f10 (- x 1) 1) 2)))
 
-...................
+; inadmissable, body contract violation. f10 is called with two inputs, but only expects one.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 11.
@@ -204,7 +211,7 @@ write the next one.
       1
     (f11 (+ 1 (f11 (- x 1))))))
 
-...................
+; inadmissable, non-termination. (f11 2) will not terminate, because the outer call to f11 keeps growing
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 12.
@@ -214,7 +221,7 @@ write the next one.
   (cond ((endp z)  0)
         (t         (f12 (rev x)))))
 
-...................
+; inadmissable, free occurance of variable z. Fuction body not a legal statement
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 13.
@@ -224,8 +231,7 @@ write the next one.
   (cond ((endp x)  x)
         (t         (cons x (f12 (rev x))))))
 
-...................
-
+; inadmissable, undefined function f12. Body is not a legal expression.
 
 |#
 
@@ -239,7 +245,7 @@ write the next one.
 ;; Simplest will mean the measure function body with the fewest function calls.
 ;; Also, please ignore the fact all the functions are named f.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#|
+
 1.
 (defunc f (x y)
   :input-contract (and (posp x) (posp y))
@@ -248,7 +254,13 @@ write the next one.
         (< x 1)     (f x y))
         (t           (+ 2 (f (- x 1) y)))))
 
-...................
+
+(defunc m (x y)
+  :input-contract (and (posp x) (posp y))
+  :output-contract (natp (m x y))
+  x)
+
+; also parens are messed up
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 2.
@@ -259,7 +271,10 @@ write the next one.
     y
     (+ 1 (f (rest x) y))))
 
-...................
+(defunc m (x y)
+  :input-contract (and (posp x) (posp y))
+  :output-contract (natp (m x y))
+  (len x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 3.
@@ -270,7 +285,10 @@ write the next one.
         ((equal y 1) nil)
         (t           (f (cons (+ y 1) x) (- y 1)))))
 
-...................
+(defunc m (x y)
+  :input-contract (and (listp x) (posp y))
+  :output-contract (natp (m x y))
+  y)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 4.
@@ -283,7 +301,11 @@ write the next one.
       (f x (- y (len x)))
       (f (rest x) y))))
 
-...................
+(defunc m (x y)
+  :input-contract (and (listp x) (posp y))
+  :output-contract (natp (m x y))
+  (abs (- (len x) y))
+;; assumed that abs is defined
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 5.
@@ -296,13 +318,18 @@ write the next one.
       0
       (f (cons (- (first x) 1) x)))))
 
-...........
+(defunc m (x)
+  :input-contract (lonp x)
+  :output-contract (natp (m x y))
+  (if (endp x)
+      11
+      (first x)))
 |#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; III. PROVING A MEASURE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#|
+
 
 For the following problems, whenever you are asked to prove termination of
 some function f, provide a measure function m such that
@@ -387,14 +414,48 @@ QED
   :output-contract (lorp (foo1 l2 l1))
   (cond ((endp l1)   l2)
         ((endp l2)   (foo1 (rest l1) nil))
-        (t          (foo1 (cons (first l1) l2) (rest l1) ))))
+        (t           (foo1 (cons (first l1) l2) (rest l1)))))
 
 Provide a measure function
-..................
 
+(defunc m (l2 l1)
+  :input-contract  (and (lorp l2) (lorp l1))
+  :output-contract (natp (m x y))
+  (len l1))
 
 And then prove that it is indeed a measure function.
-..................
+
+Two recursive calls so two proof obligations:
+
+(implies (and (lorp l2) (lorp l1) (not (endp l1))) (< (m (rest l1) nil) (m l2 l1)))
+
+C1. (lorp l2)
+C2. (lorp l1)
+C3. (not (endp l1))
+
+Prove
+(< (m (rest l1) nil) (m l2 l1))
+= { Def m }
+(< (len nil)) (len l1))
+= { C3, Definition of len, Decreasing len axiom  }
+
+QED
+
+
+(implies (and (lorp l2) (lorp l1) (not (endp l1)) (not (endp l2))) (< (m (cons (first l1) l2) (rest l1)) (m l2 l1)))
+
+C1. (lorp l2)
+C2. (lorp l1)
+C3. (not (endp l1))
+C3. (not (endp l2))
+
+Prove
+(< (m (cons (first l1) l2) (rest l1)) (m l2 l1))
+= { Def m }
+(< (len (rest l1))) (len l1))
+= { Decreasing len axiom }
+
+QED
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;2. Prove termination for the following function.
@@ -408,7 +469,11 @@ And then prove that it is indeed a measure function.
 
 Define a measure function m for foo2 and prove using equation reasoning that
 It is indeed a measure.
-..................
+
+(defunc m (p v)
+  :input-contract (and (posp p) (posp v))
+  :output-contract (natp (m p v))
+  (+ p v))
 
 The formalization for Condition 4 (above).
 
@@ -430,18 +495,48 @@ which is the same as:
          (< (+ (- p v) v) (+ p v)))
 
 Now prove the above two using equational reasoning
-......................
+
+C1. (posp p)
+C2. (posp v)
+C3. (< p v)
+
+Prove
+(< (m p (- v p)) (m p v))
+= { Def m }
+(< (+ p (- v p)) (+ p v))
+= { Arithmetic }
+(< v (+ p v))
+= { C1, Arithmetic }
+
+QED
+
+
+C1. (posp p)
+C2. (posp v)
+C3. (not (< p v))
+C3. (> p v)
+
+Prove
+(< (m (- p v) v) (m p v))
+= { Def m }
+(< (+ (- p v) v) (+ p v))
+= { Arithmetic }
+(< p (+ p v))
+= { C2, Arithmetic }
+
+QED
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;3. Prove termination for the following function:
-
+#
 (defunc foo3 (x1 x2)
   :input-contract (and (listp x1) (integerp x2))
   :output-contract (natp (foo3 x1 x2))
   (cond ((and (endp x1) (equal x2 0)) (+ 1 (len x1)))
         ((and (endp x1) (> x2 0))     (+ 1 (foo3 x1 (- x2 1))))
-        ((endp x1)                   (+ 1 (foo3 x1 (+ 1 x2))))
-        (t                          (+ 1 (foo3 (rest x1) (- 0 x2))))))
+        ((endp x1)                    (+ 1 (foo3 x1 (+ 1 x2))))
+        (t                            (+ 1 (foo3 (rest x1) (- 0 x2))))))
+
 
 ; Define a measure function m for foo3.
 #|Hint: Note that you can start by writing candidate measures for each branch
@@ -453,5 +548,76 @@ Also, feel free to use any (terminating) function  we've defined in the past
 in your measure function.
 |#
 ;Then prove that the above defined function m is indeed a measure for foo3.
-...............................
+
+(defunc m (x1 x2)
+  :input-contract (and (listp x1) (integerp x2))
+  :output-contract (natp (m x1 x2))
+  (+ (len x1) (abs x2)))
+
+; Assuming we have abs defined
+
+Three recursive calls so two proof obligations:
+
+(implies (and (listp x1) (integerp x2) (not (and (endp x1) (equal x2 0))) (endp x1) (> x2 0))) (< (m x1 (- x2 1)) (m x1 x2))
+
+C1. (listp x1)
+C2. (integerp x2)
+C3. (not (and (endp x1) (equal x2 0)))
+C4. (and (endp x1) (> x2 0))
+...
+C5. (not equal x2 0) { C3, C4, PL }
+C6. (> x2 0) { C4, PL }
+
+Prove
+(< (m x1 (- x2 1)) (m x1 x2))
+= { Def m }
+(< (+ (len x1) (abs (- x2 1))) (+ (len x1) (abs x2)))
+= { Arithmetic }
+(< (abs (- x2 1)) (abs x2))
+= { definiton of abs, C6 }
+(< (- x2 1) x2)
+= { Arithmetic }
+
+QED
+
+
+(implies (and (listp x1) (integerp x2) (not (and (endp x1) (equal x2 0))) (not (endp x1) (> x2 0)) (endp x1)) (< (m x1 (+ 1 x2)) (m x1 x2)))
+
+C1. (listp x1)
+C2. (integerp x2)
+C3. (not (and (endp x1) (equal x2 0)))
+C4. (not (and (endp x1) (> x2 0)))
+C5. (endp x1)
+...
+C6. (< x2 0) { C3, C4, C5, PL, Arithmetic }
+
+Prove
+((< (m x1 (+ 1 x2)) (m x1 x2)))
+= { Def m }
+(< (+ (len x1) (abs (+ 1 x2))) (+ (len x1) (abs x2)))
+= { Arithmetic }
+(< (abs (+ 1 x2)) (abs x2))
+= { definiton of abs, C6, Arithmetic }
+
+QED
+
+
+(implies (and (listp x1) (integerp x2) (not (and (endp x1) (equal x2 0))) (not (endp x1) (> x2 0)) (not (endp x1))) (< (m (rest x1) (- 0 x2)) (m x1 m2)))
+
+C1. (listp x1)
+C2. (integerp x2)
+C3. (not (and (endp x1) (equal x2 0)))
+C4. (not (and (endp x1) (> x2 0)))
+C5. (not (endp x1))
+
+Prove
+(< (m (rest x1) (- 0 x2)) (m x1 m2))
+= { Def m }
+(< (+ (len (rest x1)) (abs (- 0 x2))) (+ (len x1) (abs x2)))
+= { Arithmetic, Def abs }
+(< (len (rest x1)) (len x1))
+= { Decreasing len axiom }
+
+QED
+
 |#
