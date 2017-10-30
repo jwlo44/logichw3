@@ -362,7 +362,7 @@ lecture notes. An example of test? is the following.
 ;; access to a procedure IS_VALID(f) that can check if the input propositional
 ;; formula f is valid. How do we build IS_UNSAT(F)? An explanation in English is fine.
 ;; Hint: we can use propositional logic connectives ...
-;IS_VALID(not f)
+;; IS_VALID(not f)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -379,16 +379,32 @@ lecture notes. An example of test? is the following.
 #|
 1. Prove the following using equational reasoning:
 
-(not (or (not (implies (natp n)
-                       (equal (foo 0 n) (+ 1 n))))
+(and (implies (natp n)
+                       (equal (foo 0 n) (+ 1 n)))
+         (implies (and (natp n)
+                             (equal n 0))
+ 
+                       (equal (foo 1 n) (+ 2 n))))
+
+                       
+MT (not (or (not (equal (foo 0 n) (+ 1 n)))     
          (not (implies (and (natp n)
                              (equal n 0))
  
                        (equal (foo 1 n) (+ 2 n))))))
-|#
+                       
+MT (not (or (not (equal (foo 0 n) (+ 1 n)))     
+         (not (implies (equal n 0))
+                       (equal (foo 1 n) (+ 2 n)))))
+                       
+Demorgans (and (equal (foo 0 n) (+ 1 n))     
+               (implies (equal n 0))
+                       (equal (foo 1 n) (+ 2 n)))                        
+                       
+c1. natp n
+c2. 
 
 
-#|
 2. Prove the following using equational reasoning:
 
 (implies (and (natp n)
