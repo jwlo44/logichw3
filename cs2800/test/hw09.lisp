@@ -755,8 +755,7 @@ may be helpful later.***
 (defunc split-list-front (l)
   :input-contract (and (lorp l) (not (endp l)))
   :output-contract (lorp (split-list-front l))
-  (split-front-hlp l (half-idx (len l))))#|ACL2s-ToDo-Line|#
-
+  (split-front-hlp l (half-idx (len l))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DEFINE
@@ -843,21 +842,42 @@ Do you need induction?
 ;; rest of one list and the other list.
 ;; Thus the lists can be merged in O(n) time.
 (defunc merge (l1 l2)
-  ..................)
+  :input-contract (and (lorp l1) (lorp l2))
+  :output-contract (lorp (merge l1 l2))
+  (cond ((endp l1) l2)
+        ((endp l2) l1)
+        ((< (first l1) (first l2)) (cons (first l1) (merge (rest l1) l2)))
+        (t (cons (first l2) (merge l1 (rest l2))))))
 
 
 ;; Add  your own tests.
-............
+(check= (merge (list 0 1) (list 0 1)) (list 0 0 1 1))
+(check= (merge (list) (list)) (list))
+(check= (merge (list 1) (list)) (list 1))
+(check= (merge (list) (list 2)) (list 2))
+(check= (merge (list -1 5 10 ) (list 2 4 100)) (list -1 2 4 5 10 100))
+(check= (merge (list -1 5 10 ) (list 100)) (list -1 5 10 100))
+
 
 ;; Prove merge terminates by giving a measure function m-merge and proving
 ;; that m-merge decreases with each recursive call to merge.
-.................. (for measure)
+(defunc m-merge (l1 l2)
+   :input-contract (and (lorp l1) (lorp l2))
+   :output-contract (natp (m-merge l1 l2))
+   (+ (len l1) (len l2)))
+
+
 #|
 ..................
 |#
 
 ;; ADD TESTS BELOW
- ................
+(check= (m-merge (list 0 1) (list 0 1)) 4)
+(check= (m-merge (list) (list)) 0)
+(check= (m-merge (list 1) (list)) 1)
+(check= (m-merge (list) (list 2)) 1)
+(check= (m-merge (list -1 5 10 ) (list 2 4 100)) 6)
+(check= (m-merge (list -1 5 10 ) (list 100)) 4)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GIVEN
@@ -876,7 +896,10 @@ Do you need induction?
            (msort (split-list-back l)))))
 
 ;; ADD TESTS BELOW
- ................
+(check= (msort (list -1 5 -100 10)) (list -100 -1 5 10))
+(test? (implies (and (rationalp x) (rationalp y) (> x y))
+                (equal (msort (list x y))
+                            (list y x))))
 
 
 ;; Prove msort terminates. ACL2s can't easily do this so
@@ -983,28 +1006,29 @@ phi_merge_isort :
 ;; as "X.XX seconds runtime"
 ;; Don't worry if your times match what we have.
 ;; Just say what YOUR REPL spits out.
-;;..........................
+;; 1.42 seconds realtime, 1.41 seconds runtime
 
 
 (acl2::er-progn
    (acl2::time$ (acl2::value-triple (isort *med-list*)))
    (acl2::value-triple nil))
 ;; How long does this take?
-;;..........................
+;; 0.00 seconds realtime, 0.00 seconds runtime
 
 
 (acl2::er-progn
    (acl2::time$ (acl2::value-triple (msort *large-list*)))
    (acl2::value-triple nil))
 ;; How long does this take?
-;;..........................
+;; 23.64 seconds realtime, 22.76 seconds runtime
 
 
 (acl2::er-progn
    (acl2::time$ (acl2::value-triple (isort *large-list*)))
-   (acl2::value-triple nil))
+   (acl2::value-triple nil))#|ACL2s-ToDo-Line|#
+
 ;; How long does this take?
-;;..........................
+;;took 0.00 seconds realtime, 0.00 seconds runtime
 
 
 ;; Wait.  What happened here?  Shouldn't msort be much
@@ -1015,7 +1039,8 @@ phi_merge_isort :
 ;; about what happened).
 
 #|
-...............
+Finding the size of the list in ACL2s is O(n) instead of O(1), I think checking the size every ime is 
+slowing msort down.
 |#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1053,4 +1078,3 @@ assignment.  This is  for your own practice.
 
 |#
 
-|#
