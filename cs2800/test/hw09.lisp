@@ -668,9 +668,74 @@ may be helpful later.***
   :output-contract (natp (m-split l idx))
   (if (< (len l) idx) 
     (len l)
-    idx))
+    idx)) ;; the smaller of the two
 #|
 .................. (proof goes here)
+(and (lorp l) (natp idx)) => (m-split l idx) = B > C = (m-split (rest l) (- idx 1))
+
+B =   (if (< (len l) idx) 
+    (len l)
+    idx))
+C =   (if (< (len (rest l)) (- idx 1)) 
+    (len (rest l))
+    ( - idx 1)))
+
+Case 1: the list is smaller than the index
+contexts:
+c1. (< (len l) idx)
+c2. lorp l
+c3. natp idx
+
+prove:
+(>
+  (if (< (len l) idx) 
+      (len l)
+      idx))
+  (if (< (len (rest l)) (- idx 1)) 
+    (len (rest l))
+    ( - idx 1))))
+
+{c1, if-axioms}
+(>
+      (len l)
+  (if (< (len (rest l)) (- idx 1)) 
+    (len (rest l))
+    ( - idx 1))))
+
+{decreasing len axiom, arithmetic, c1} ;; we're decreasing the length and the idx by 1 each, so < is preserved
+(> (len l) (len (rest l)))
+
+{decreasing len axiom}
+qed
+
+Case 2: the list is not smaller
+contexts:
+c1. (not ((< (len l) idx))
+c2. lorp l
+c3. natp idx
+
+prove:
+(>
+  (if (< (len l) idx) 
+      (len l)
+      idx))
+  (if (< (len (rest l)) (- idx 1)) 
+    (len (rest l))
+    ( - idx 1))))
+    
+{c1, if-axioms}
+(> (idx) 
+ (if (< (len (rest l)) (- idx 1)) 
+    (len (rest l))
+    ( - idx 1))))
+
+{decreasing len, artihmetic, c1}
+(> (idx) (- idx 1))
+
+{arithmetic}
+qed
+
+
 |#
 
 
@@ -744,7 +809,7 @@ may be helpful later.***
                                     (natp idx)(> idx 0)(< idx (len l)))
                                (< (len (split-front-hlp l idx)) (len l))))
 
-
+;; NOTE: our tests are below in the "more tests" and "most tests sections"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DEFINE
 ;; split-list-front: LOR (non-empty) -> LOR
@@ -778,7 +843,9 @@ may be helpful later.***
 (test? (implies (and (lorp l)(consp l))
                 (equal (app (split-list-front l)
                             (split-list-back l))
-                       l)))
+                       l)))#|ACL2s-ToDo-Line|#
+
+
 #|
 PROVE phi_app-split:
 (lorp l)/\(consp l) => ((app (split-list-front l)
@@ -789,7 +856,41 @@ and thus have a second variable.
 Please do NOT use any of the given theorems above unless you prove them first
 ....otherwise you could simply prove this by saying "phi_split_app2".
 
-......................
+induction scheme for listp:
+1. (not (consp l) => phi
+2. (and (consp l) (phi|(l (rest l)))) => phi
+
+
+proof obligation 1.
+(implies (and (not (consp l)) (lorp l) (consp l) ............
+antecedent is false because of (and (not consp) (consp)
+qed
+
+proof obligation 2.
+using induction scheme + exportation:
+
+(implies (and (consp l)
+              (lorp l)
+              (implies (and (lorp (rest l))(consp (rest l)))
+                       (equal (app (split-list-front (rest l)) (split-list-back (rest l)))
+                              (rest l)))
+         (equal (app (split-list-front l)
+                     (split-list-back l))
+                 l)
+                       
+                       
+c1. (lorp l)
+c2. (consp l)
+c3. ((lorp (rest l)) /\ (consp (rest l)) => ((app (split-list-front (rest l)) (split-list-back (rest l))) = (rest l)))
+
+well we can't use c3 yet because we don't know (consp (rest l)). 
+so...
+can we prove phi when rest l is endp and when rest l is consp?
+
+c4. (consp (rest l))
+..........................
+c5. ((app (split-list-front (rest l)) (split-list-back (rest l))) = (rest l)))
+
 
 |#
 
@@ -819,8 +920,97 @@ phi_split-len: (implies (and (lorp l)(consp l))
                                (len l)))
 
 Do you need induction?
-...............
 
+
+the length of the first half plus the length of the second half of a non-empty list equals the length of the list
+
+contexts:
+c1. lorp l
+c2. consp l
+
+prove:
+(equal (+ (len (split-list-front l))
+          (len (split-list-back l)))
+       (len l)))
+       
+{def. split-list-front, def. split-list-back}
+(equal (+ (len (split-front-hlp l (half-idx (len l))))
+          (len (split-back-hlp l (half-idx (len l)))))
+        (len l))
+        
+{def. split-front-hlp}
+(equal (+ (len (if (or (endp l)(equal (half-idx (len l)) 0))
+                   nil
+                   (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+          (len (split-back-hlp l (half-idx (len l)))))
+        (len l))     
+        
+{c1, phi_splitlen2, MP, if-axioms}
+(equal (+ (len (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+          (len (split-back-hlp l (half-idx (len l)))))
+        (len l))   
+               
+{def. split-back-hlp}
+(equal (+ (len (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+          (len (if (or (endp l)(equal (half-idx (len l)) 0))
+                    l
+                  (split-back-hlp (rest l) (- (half-idx (len l)) 1))))
+        (len l))   
+       
+{c1, phi_splitlen2, MP, if-axioms}
+(equal (+ (len (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+          (len (split-back-hlp (rest l) (- (half-idx (len l)) 1))))
+        (len l))   
+        
+looks like a job for induction
+        
+induction scheme for listp
+1. (not (consp l)) => phi
+2. (and (consp l) (phi | (l (rest l)))) => phi 
+
+
+proof obligation 1: (after Exportation)
+(implies (and (not (consp l)) (consp l) ...
+{pl}
+qed
+;; antecedent is false because phi has consp l
+        
+
+proof obligation 2: the real deal
+(implies 
+       (and (lorp l) 
+            (consp l)
+            (implies (and (lorp (rest l))(consp (rest l)))
+                        (equal (+ (len (cons (first (rest l))(split-front-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1)))))
+                                  (len (split-back-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1))))
+                               (len (rest l))))
+       (equal (+ (len (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+                 (len (split-back-hlp (rest l) (- (half-idx (len l)) 1))))
+              (len l))
+contexts:
+c1. lorp l
+c2. consp l
+c3. (implies (and (lorp (rest l))(consp (rest l)))
+                        (equal (+ (len (cons (first (rest l))(split-front-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1)))))
+                                  (len (split-back-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1))))
+                               (len (rest l))))
+..........................
+c4. (equal (+ (len (cons (first (rest l))(split-front-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1)))))
+              (len (split-back-hlp (rest (rest l)) (- (half-idx (len (rest l))) 1))))
+           (len (rest l)))) {MP, c1, c2, c3}
+
+prove:
+
+(equal (+ (len (cons (first l)(split-front-hlp (rest l) (- (half-idx (len l)) 1)))))
+          (len (split-back-hlp (rest l) (- (half-idx (len l)) 1))))
+       (len l))
+       
+{c4, def. len, cons axioms}
+(equal (1 + (len (rest l))
+       (len l))
+qed
+
+       
 |#
 
 ;; In the interest of time and your own sanity, you can use program mode for msort
@@ -869,6 +1059,47 @@ Do you need induction?
 
 #|
 ..................
+merge terminates if the recursive call is less than the original call for the measure function
+for each recursive call
+proof obligation 1:
+(and (lorp l1) (lorp l2) (not endp l1) (not (endp l2)) (< (first l1) (first l2))) => (m-merge l1 l2) > (m-merge (rest l1) l2)
+
+c1. (lorp l1)
+c2. (lorp l2)
+c3. (not (endp l1))
+c4. (< (first l1) (first l2))
+....
+
+Prove
+(m-merge l1 l2) > (m-merge (rest l1) l2)
+{def m-merge} 
+(> (+ (len l1) (len l2))) (+ (len (rest l1)) (len l2)))
+{Arithmetic}
+(> (len l1) (len (rest l1)))
+{Decreasing len axiom}
+
+QED
+
+
+proof obligation 2: 
+(and (lorp l1) (lorp l2) (not endp l1) (not endp l2) (not (< (first l1) (first l2)))) => (m-merge l1 l2) = A > B (m-merge l1 (rest l2))
+
+c1. (lorp l1)
+c2. (lorp l2)
+c3. (not (endp l1))
+c4. (not (< (first l1) (first l2)))
+....
+
+Prove
+(m-merge l1 l2) > (m-merge l1 (rest l2))
+{def m-merge} 
+(> (+ (len l1) (len l2))) (+ (len l1) (len (rest l2))))
+{Arithmetic}
+(> (len l2) (len (rest l2)))
+{Decreasing len axiom}
+
+QED
+
 |#
 
 ;; ADD TESTS BELOW
@@ -896,10 +1127,20 @@ Do you need induction?
            (msort (split-list-back l)))))
 
 ;; ADD TESTS BELOW
+(check= (msort (list)) (list))
 (check= (msort (list -1 5 -100 10)) (list -100 -1 5 10))
 (test? (implies (and (rationalp x) (rationalp y) (> x y))
                 (equal (msort (list x y))
                             (list y x))))
+
+;; measure function for msort
+(defuc m-msort (l)
+    :input-contract (lorp l)
+    :output-contract (natp (m-msort l))
+    (len l))
+
+(check= (m-msort (list)) 0)
+(check= (m-msort (list 2 1 4)) 3)
 
 
 ;; Prove msort terminates. ACL2s can't easily do this so
@@ -913,7 +1154,46 @@ Do you need induction?
 ;; obligations? Why did we look at proofs involving split-list-front (such as phi_splitlen)?
 ;;.......These are rhetorical questions. You do not have to provide an answer.
 #|
-..................
+
+
+msort terminates if the recursive call is less than the original call for the measure function
+for each recursive call
+proof obligation 1:
+(and (lorp l) (not (or (endp l)(endp (rest l))))) => (m-msort l) > (m-msort (split-list-front l))
+
+c1. (lorp l1)
+c2. (not (or (endp l)(endp (rest l)))))
+....
+
+Prove
+(m-msort l) > (m-msort (split-list-front l)
+{def m-msort} 
+
+(> (len l) (len (split-list-front l)))
+{def split-list-front} 
+(> (len l) (len (split-front-hlp l (half-idx (len l)))))
+{phi_splitSize, phi_splitlen2, phi_halfidx, phi_splitlen, c2, MP}
+qed
+
+
+
+proof obligation 2:
+(and (lorp l) (not (or (endp l)(endp (rest l))))) => (m-msort l) > (m-msort (split-list-back l))
+
+c1. (lorp l1)
+c2. (not (or (endp l)(endp (rest l)))))
+....
+
+Prove
+(m-msort l) > (m-msort (split-list-back l)
+{def m-msort} 
+
+(> (len l) (len (split-list-back l)))
+{def split-list-back} 
+(> (len l) (len (split-back-hlp l (half-idx (len l)))))
+{phi_splitSize, phi_splitlen2, phi_halfidx, phi_splitlen, c2, MP}
+qed
+
 |#
 #|
 IMPORTANT Free theorem you can use in the next part
@@ -1025,8 +1305,7 @@ phi_merge_isort :
 
 (acl2::er-progn
    (acl2::time$ (acl2::value-triple (isort *large-list*)))
-   (acl2::value-triple nil))#|ACL2s-ToDo-Line|#
-
+   (acl2::value-triple nil))
 ;; How long does this take?
 ;;took 0.00 seconds realtime, 0.00 seconds runtime
 
@@ -1039,7 +1318,7 @@ phi_merge_isort :
 ;; about what happened).
 
 #|
-Finding the size of the list in ACL2s is O(n) instead of O(1), I think checking the size every ime is 
+Finding the size of the list in ACL2s is O(n) instead of O(1), I think checking the size every time is 
 slowing msort down.
 |#
 
