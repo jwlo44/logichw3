@@ -877,7 +877,8 @@ Do you need induction?
 (check= (m-merge (list 1) (list)) 1)
 (check= (m-merge (list) (list 2)) 1)
 (check= (m-merge (list -1 5 10 ) (list 2 4 100)) 6)
-(check= (m-merge (list -1 5 10 ) (list 100)) 4)
+(check= (m-merge (list -1 5 10 ) (list 100)) 4)#|ACL2s-ToDo-Line|#
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GIVEN
@@ -936,6 +937,78 @@ phi_merge_isort :
 ;; or (- n 1). Any (theoretically) admissible function generates an induction scheme
 ;;
 ;; You may use any already proven theorems in  your proof.
+
+#|
+Started but did not finish
+
+
+(implies (lorp l)(sortedp l (msort l)))
+
+
+
+(sortedp l (msort l))
+
+(defthm phi_isort_sorted
+  (implies (lorp l)
+           (sortedp l (isort l))))
+
+;; phi_msort_isort: (lorp l) => ((msort l) = (isort l))
+
+Prove:
+((msort l) = (isort l))
+
+{Def msort, (not (or (endp l)(endp (rest l)))) }
+
+ (equal (merge (msort (split-list-front l))
+               (msort (split-list-back l)))
+        (isort l))
+ 
+ {(and (lorp l1)(lorp l2)),
+      (and (equal (app l1 l2) l) (equal l1 (split-list-front l)) (equal l2 (split-list-back l))) }
+      
+       (equal (merge (msort l1)
+                     (msort l2))
+              (isort (app l1 l2)))
+       
+ { phi_merge_isort }                   
+       (equal (merge (isort l1)(isort l2))
+              (isort (app l1 l2)))
+
+
+(equal (merge (isort l1)(isort l2))
+              (isort (app l1 l2)))
+
+phi_merge_isort :
+       (implies (and (lorp l1)(lorp l2))
+                (equal (merge (isort l1)(isort l2))
+                       (isort (app l1 l2)))))
+
+
+
+;; Induction Scheme: merge
+
+1. (not (and (lorp l1) (lorp l2))) => phi
+2. (and (lorp l1) (lorp l2) (endp l1)) => phi
+3. (and (lorp l1) (lorp l2) (endp l2) (not (endp l1))) => phi
+4. (and (lorp l1) (lorp l2) (not (endp l1) (not (endp l2))) (< (first l1) (first l2)))
+5. (and (lorp l1) (lorp l2) (not (endp l1) (not (endp l2))) (not (< (first l1) (first l2))))
+|#
+
+
+;; Induction Scheme: merge
+
+(defunc merge (l1 l2)
+  :input-contract (and (lorp l1) (lorp l2))
+  :output-contract (lorp (merge l1 l2))
+  (cond ((endp l1) l2)
+        ((endp l2) l1)
+        ((< (first l1) (first l2)) (cons (first l1) (merge (rest l1) l2)))
+        (t (cons (first l2) (merge l1 (rest l2))))))
+
+
+
+
+
 ;;
 ;; 5 pt BONUS: Get ALC2s to prove this for you as well (don't spend time doing
 ;; this for the points.  It may cost you lots of time and you'll only earn
@@ -943,6 +1016,11 @@ phi_merge_isort :
 ;;
 #|
 ..............
+
+
+       (implies (and (lorp l1)(lorp l2))
+                (equal (merge (isort l1)(isort l2))
+                       (isort (app l1 l2)))))
 |#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1025,8 +1103,7 @@ phi_merge_isort :
 
 (acl2::er-progn
    (acl2::time$ (acl2::value-triple (isort *large-list*)))
-   (acl2::value-triple nil))#|ACL2s-ToDo-Line|#
-
+   (acl2::value-triple nil))
 ;; How long does this take?
 ;;took 0.00 seconds realtime, 0.00 seconds runtime
 
