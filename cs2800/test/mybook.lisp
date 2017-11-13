@@ -27,9 +27,19 @@
 
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
-(defunc rationalcond (x)
-  :input-contract (rationalp x)
-  :output-contract (rationalp (rationalcond x))
-  (cond 
-   ((< 0 x) x)
-   ((> 0 x) 1)))
+#|
+induction scheme for in
+
+(defunc in (a x)
+:input-contract (listp x)
+:output-contract (booleanp (in a x))
+(cond ((endp x) nil)
+      ((equal a (first x)) t)
+      (t (in a (rest x)))))
+
+1. (not (listp x)) => phi
+2. (listp x) /\ (endp x) => phi
+3. (listp x) /\ (not (endp x)) /\ (equal a (first x)) => phi
+4. (listp x) /\ (not (endp x)) /\ (not (equal a (first x))) /\ (phi | (x (rest x)))
+
+|#
