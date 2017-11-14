@@ -249,6 +249,18 @@ IS for merge
 
 1. (and (not (and (lorp l1) (lorp l2)) (lorp l1) (lorp l2) ... ) => ...
 true, PL
+the LHS of the implies after exportation is always false
+
+written out:
+(implies (and ((not (and (lorp l1) (lorp l2))) (lorp l1)(lorp l2)(orderedp l1)(orderedp l2))
+                        (orderedp (merge l1 l2)))
+						
+c1. (not (and (lorp l1) (lorp l2)))
+c2. (and (lorp l1) (lorp l2))
+..............................
+contradiction
+c3. nil {c1, c2}
+
 
 2. (implies (and (lorp l1) (lorp l2) (endp l1)(orderedp l1)(orderedp l2))
             (orderedp (merge l1 l2)))
@@ -545,9 +557,36 @@ things that should be true about merge:
 - If lists x and y are ordered, what happens if you switch
 from (merge x y) to (merge y x) ?
 
+nothing, merge is commutative
+(implies (and (lorp x) (lorp y) (orderedp x) (orderedp y))
+         (equal (merge x y) (merge y x))
+
 - What happens when you insert an element into a ordered 
-merged list? What happens if you insert the element
+merged list?
+
+the resulting list is ordered
+(implies (and (lorp x) (lorp y) (orderedp x) (orderedp y))
+         (orderedp (insert e (merge x y))))
+
+also, the result equals the merge of that element into the list
+(implies (lorp x) (equal (insert e x)
+                         (merge (list e) x)))
+						 
+inserting into an orderd merged list is a specific example of the line above:
+	(implies (and (lorp x) (lorp y) (orderedp x) (orderedp y))
+         (equal (insert e (merge x y))
+		        (merge (list e) (merge x y))))					 
+		 
+- What happens if you insert the element
 in x (which is ordered) and then merge? 
+
+the resulting list is still ordered. also the list equivalent to the list from above.
+(implies (and (lorp x) (lorp y) (orderedp x) (orderedp y))
+         (orderedp (merge (insert e x) y)))
+(implies (and (lorp x) (lorp y) (orderedp x) (orderedp y))
+         (equal (merge (insert e x) y)
+		        (insert e (merge x y))))		 
+
   * Let's assume that  (first x) < (first y) provided 
     lists x and y are non-empty just to make your lives easier 
     You can just add it to your lemma's context rather than 
@@ -555,7 +594,9 @@ in x (which is ordered) and then merge?
     your math skills, you can do the proof without this assumption.
     By the way, why can I order these lists any way I want and make
     that assumption?
-
+	
+	merge is commutative
+	
 Feedback from Dustin: Do NOT try to prove the associativity of merge.
 The proof is horrible.  The above questions should guide you to a 
 reasonable solution that you can finish before you graduate.
@@ -567,6 +608,15 @@ L3:
     => (merge (list e) l2) = (insert e l2)
 ......................
 
+phi:
+  (implies (and (lorp x)(lorp y))
+           (equal (isort (merge x y)) 
+                  (merge (isort x) (isort y))))
+"the sorted version of two merged lists is the same as the merge of the two lists each sorted"
+this is true because merge puts every pair of elements in order
+also: (orderedp (merge (orderedp x) (orderedp y)))
+also: (orderedp (isort x))
+so: (orderedp (merge (isort x) (isort y)))
 
 
 IS for merge
@@ -575,40 +625,256 @@ IS for merge
 3. (and (lorp l1) (lorp l2) (not (endp l1)) (endp l2)) => phi
 4. (and (lorp l1) (lorp l2) (not (endp l1)) (not (endp l2)) (< (first l1)(first l2)) (phi|(l1 (rest l1))) => phi
 5. (and (lorp l1) (lorp l2) (not (endp l1)) (not (endp l2)) (not (< (first l1)(first l2))) (phi|(l2 (rest l2))) => phi
+				  
+>> proving like a PRO *sunglasses emoji*
+cmagic: first x < first y  {given as hint}
+	
+lemma 1: we probably need this	{taken from hints above}	
+(implies (and (lorp x) (lorp y))
+         (equal (merge (insert e x) y)
+		        (insert e (merge x y))))					
+prove:
+(equal (isort (merge x y)) 
+       (merge (isort x) (isort y))))
+	  
+def. isort 
+(equal (insert (first (merge x y)) (isort (rest (merge x y))))
+       (merge (isort x) (isort y)))
+	   
+def. isort
+(equal (insert (first (merge x y)) (isort (rest (merge x y))))
+       (merge (insert (first x) (isort (rest x))) (isort y)))
 
-phi:
-implies (and (lorp x)(lorp y))
-           (equal (isort (merge x y)) 
-                  (merge (isort x) (isort y)))))
-
-proof obligation 1:
-implies ( and (and (lorp x)(lorp y)) (not (and (lorp x) (lorp y))))
-           (equal (isort (merge x y)) 
-                  (merge (isort x) (isort y)))))				  
-PL
-True
-
-proof obligation 2: the first base case
-	implies (and (lorp x)(lorp y) (endp x))
-           (equal (isort (merge x y)) 
-                  (merge (isort x) (isort y)))))		
-
-proof obligation 3: the other base case
-implies (and (lorp x)(lorp y) (not (endp x)) (endp y)))
-           (equal (isort (merge x y)) 
-                  (merge (isort x) (isort y)))))				  
+cmagic, def. merge, first-rest, cons
+(equal (insert (first x) (isort (rest (merge x y))))
+       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
+	   
+inductive step: assume (isort (rest (merge x y))) == (merge (isort (rest x) (isort y)))
+(equal (insert (first x) (merge (isort (rest x) (isort y))))
+       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
 				
-proof obligation 4: the first recursive case
-implies (and (lorp x)
-             (lorp y))
-			 (not (endp x))
-			 (not (endp y))
-			 (< (first x)(first y))
-			 (implies (and (lorp (rest x))(lorp y))
-                      (equal (isort (merge (rest x) y)) 
-                             (merge (isort (rest x)) (isort y)))))
-           (equal (isort (merge (rest x) y)) 
-                  (merge (isort (rest x)) (isort y)))))
+lemma 1|((e (first x)) (x (isort (rest x))) (y (isort y)))
+(equal (merge (insert (first x) (isort (rest x))) (isort y))
+       (merge (insert (first x) (isort (rest x))) (isort y)))
+QED 
+
+this is wrong because I need to explain where I got (merge (isort (rest x)) (isort y)) from
+ok back up where did that inductive hypothesis come from?
+IS for Isort
+1. not lorp l => phi
+2. (lorp l) /\ (endp l) => phi
+3. (lorp l) /\ (not endp l) /\ phi|(rest l) => phi
+
+we're using this induction scheme where l is (merge x y)
+here's the proof obligation #3 written out
+(implies (and (lorp x)
+              (lorp y) 
+              (not (endp (merge x y)))
+			  (implies (and (lorp x) (lorp y)
+			                (lorp (merge x y))
+			                (not (endp (merge x y))))
+					   (equal (isort (rest (merge x y)))
+					          (merge (isort (rest x) (isort y)))
+c1. lorp x
+c2. lorp y
+c3. (not (endp (merge x y)))
+c4. the inner implies
+.......................
+c5. (equal (isort (rest (merge x y)))
+		   (merge (isort (rest x) (isort y))) {c1, c2, c3, c4, MP}
+
+							  
+
+
+now to prove the base cases
+proof obligation 1:
+contradiction in LHS of implies thanks to induction scheme + phi having (not (and (lorp x) (lorp y))) and (and (lorp x) (lorp y))
+
+proof obligation 2:
+x is empty
+c1. lorp x
+c2. lorp y
+c3. endp x
+prove
+(equal (isort (merge x y)) 
+       (merge (isort x) (isort y))
+def. merge, c3
+(equal (isort y)
+       (merge (isort x) (isort y)))
+
+def. isort, c3
+(equal (isort y)
+       (merge nil (isort y)))
+	   
+def. merge when l1 is nil	   
+(equal (isort y)
+       (isort y))
+
+	
+proof obligation 3:
+y is empty
+c1. lorp x
+c2. lorp y
+c3. not endp x
+c4. endp y
+
+prove
+(equal (isort (merge x y)) 
+       (merge (isort x) (isort y))
+	   
+def. merge, c3, c4
+(equal (isort x)
+       (merge (isort x) (isort y)))
+
+def. isort, c4
+(equal (isort x)
+       (merge (isort x) nil))
+	   
+def. merge when l2 is nil	   
+(equal (isort x)
+       (isort x))
+	   
+qed for proof obligation 2
+	
+proof for lemma 1:
+(implies (and (lorp x) (lorp y))
+         (equal (merge (insert e x) y)
+		        (insert e (merge x y))))   
+
+IS for Insert
+1. (not lorp l) => phi
+2. (lorp l) /\ (endp l) => phi
+3. (lorp l) /\ (not (endp l)) /\ phi|(l (rest l))
+using IS for merge
+
+
+proof obligation 1
+c1. (not (and (lorp x) (lorp y)))
+c2. (and (lorp x) (lorp y))
+contradiction, LHS of implies is false so this is true by PL
+qed for lemma 1 obligation 1
+
+proof obligation 2
+c1. (lorp x)
+c2. (lorp y)
+c3. (endp x)
+				  
+prove 
+(equal (merge (insert e x) y)
+		        (insert e (merge x y)))) 
+
+def. insert, c3,
+(equal (merge (list e) y)
+       (insert e (merge x y)))
+
+def. merge, c3 
+(equal (merge (list e) y)
+       (insert e y))
+{Lemma 2}
+QED for Lemma 1 proof obligation 2
+	   
+
+
+==========================================================================================
+Lemma 2
+(implies (lorp x) (equal (insert e x)
+                         (merge (list e) x)))
+==============================================
+what's that induction scheme?
+IS for listp
+1. (endp x) => phi
+2. (not (enpd x)) /\ phi|(x (rest x)) => phi						 
+						 
+==============================================						 
+Lemma 2 proof obligation 1:
+(implies (and (lorp x)
+			  (endp x))
+		 (equal (insert e x)
+		        (merge (list e) (rest x))))
+				
+c1. lorp x
+c2. endp x
+(equal (insert e x)
+	   (merge (list e) x))
+	   
+def. insert, c2
+(equal (list e)
+       (merge (list e) x))
+	  
+def. merge, c2
+(equal (list e)
+       (list e))						 
+						 
+==============================================						 
+ Lemma 2 proof obligation 2
+(implies (and (lorp x)
+			  (not (endp x))
+			  (implies (lorp (rest x))
+			           (equal (insert e (rest x))
+					          (merge (list e) (rest x)))))
+		 (equal (insert e x)
+		        (merge (list e) x)))
+c1. lorp x
+c2. not endp x
+c3. (implies (lorp (rest x))
+		     (equal (insert e (rest x))
+		            (merge (list e) (rest x)))))
+..................................................
+c4. lorp rest x {c1, c2, first-rest, listp, endp}
+c5. (equal (insert e (rest x))
+		   (merge (list e) (rest x)))))
+				
+(equal (insert e x)
+	   (merge (list e) x))
+				
+def. merge, def. list, first-rest	 
+(equal
+  (cond ((endp y)   (list e))
+        ((< e (first y))  
+         (cons e (merge nil y)))
+        (t                          
+         (cons (first y)(merge (list e) (rest y))))))	
+  (insert e y))		 
+	
+def. merge when l1 is nil
+(equal
+  (cond ((endp y)         (list e))
+        ((< e (first y))  (cons e y))
+        (t                (cons (first y)(merge (list e) (rest y)))))	
+  (insert e y))
+	
+def. insert
+(equal
+  (cond ((endp y)         (list e))
+        ((< e (first y))  (cons e y))
+        (t                (cons (first y)(merge (list e) (rest y)))))
+  (cond ((endp y)         (list e))
+        ((<= e (first y)) (cons e y))
+        (t (cons (first y) (insert e (rest y))))))
+
+arithmetic, PL, def. insert
+(equal
+  (cond ((endp y)         (list e))
+        ((< e (first y))  (cons e y))
+        (t                (cons (first y)(merge (list e) (rest y)))))
+  (cond ((endp y)         (list e))
+        ((< e (first y))  (cons e y))
+        (t                (cons (first y) (insert e (rest y))))))
+		
+PL, cond-axioms -> the only case we care about is the t case, clearly the other two are equal
+(equal (cons (first y)(merge (list e) (rest y)))))
+       (cons (first y) (insert e (rest y))))
+
+{c4} 
+(equal (cons (first y)(merge (list e) (rest y)))))
+       (cons (first y)(merge (list e) (rest y))))
+	   
+qed for lemma 1 proof obligation 2
+
+
+lemma 1 proof obligation 4
+
+
 |#
 
 
