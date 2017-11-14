@@ -699,75 +699,38 @@ prove:
 def. isort 
 (equal (insert (first (merge x y)) (isort (rest (merge x y))))
        (merge (isort x) (isort y)))
-	   
+	  
+c5, first-rest, cons, def. merge ;; merge gets called recursively on (rest x) and y because of c5, then we take the rest of that
+(equal (insert (first x) (isort (merge (rest x) y)))
+       (merge (isort x) (isort y)))
+
+c8.
+(equal (insert (first x) (merge (isort (rest x)) (isort y))))
+       (merge (isort x) (isort y)))	   
+
 def. isort
-(equal (insert (first (merge x y)) (isort (rest (merge x y))))
+(equal (insert (first x) (merge (isort (rest x)) (isort y))))
+       (merge (insert (first x) (isort (rest x))) (isort y)))	   
+
+Lemma 1| (e (first x)) (x (isort (rest x)))) (y (isort y))
+(equal (merge (insert (first x) (isort (rest x))) (isort y)))
        (merge (insert (first x) (isort (rest x))) (isort y)))
-   
-take the hyperloop to induction land
-(equal (insert (first x) (merge (isort (rest x) (isort y))))
-       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
-				
-lemma 1|((e (first x)) (x (isort (rest x))) (y (isort y)))
-(equal (merge (insert (first x) (isort (rest x))) (isort y))
-       (merge (insert (first x) (isort (rest x))) (isort y)))
-QED 
 
+QED	for phi_merge_isort proof obligation 4
 
-cmagic, def. merge, first-rest, cons
-(equal (insert (first x) (isort (rest (merge x y))))
-       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
-	   
-cmagic, first-rest, cons, def. merge
-(equal (insert (first x) (isort (merge (rest x) y))))
-       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))   
-	   
-Lemma 2|(e (first x)) (x (isort (rest (merge x y))))
-(equal (merge (list (first x)) (isort (rest (merge x y))))
-       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))	   
+==============================================
+proof obligation 5 for phi_merge_isort
+c1. (lorp x)
+c2. (lorp y)
+c3. (not (endp x))
+c4. (not (endp y))
+c5. (not (< (first x) (first y)))
+c6. phi|(y (rest y))
+...................................
+c7. (< (first x) (first y)) {from hints}
+c8. nil (c7, c5)
 
-Lemma 2|
-(equal (merge (list (first x)) (isort (rest (merge x y))))
-       (merge (merge (list (first x)) (isort (rest x))) (merge (list (first y)) (isort (rest y)))))	   
-	   
-Other Undo
-(equal (isort (merge x y))
-       (merge (merge (list (first x)) (isort (rest x))) (merge (list (first y)) (isort (rest y)))))	   
-	   
-Undo
-(equal (merge (list (first x)) (isort (rest (merge x y))))   	   
-	   (merge (isort x) (isort y)))
-	   
-	   
-	
-
-
-this is wrong because I need to explain where I got (merge (isort (rest x)) (isort y)) from
-ok back up where did that inductive hypothesis come from?
-IS for Isort
-1. not lorp l => phi
-2. (lorp l) /\ (endp l) => phi
-3. (lorp l) /\ (not endp l) /\ phi|(rest l) => phi
-
-we're using this induction scheme where l is (merge x y)
-here's the proof obligation #3 written out
-(implies (and (lorp x)
-              (lorp y) 
-              (not (endp (merge x y)))
-			  (implies (and (lorp x) (lorp y)
-			                (lorp (merge x y))
-			                (not (endp (merge x y))))
-					   (equal (isort (rest (merge x y)))
-					          (merge (isort (rest x) (isort y)))
-c1. lorp x
-c2. lorp y
-c3. (not (endp (merge x y)))
-c4. the inner implies
-.......................
-c5. (equal (isort (rest (merge x y)))
-		   (merge (isort (rest x) (isort y))) {c1, c2, c3, c4, MP}
-
-							  
+QED for proof obligation 5 for phi_merge_isort			  
 
 ==========================================================================================
 QED for phi_merge_isort
@@ -860,20 +823,7 @@ prove
 lemma 2
 (equal (merge (merge (list e) x) y)
        (merge (list e) (merge x y)))
-	  
-how bout no
-(equal (merge (insert e x) y)
-	   (insert e (merge x y)))))
-	   
-def. merge, c3, c4, c5
-(equal (merge (insert e x) y)
-       (insert e (cons (first x)(merge (rest x) y)))
-
-
-(equal (merge (insert e x) y)
-       (insert e (cons (first x)(merge (rest x) y)))
-	   
-	   
+assoc. merge	  	   
 qed for lemma 1 proof obligation 4
 ==========================================================================================
 Lemma 2
