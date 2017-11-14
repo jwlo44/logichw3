@@ -649,6 +649,12 @@ cmagic, def. merge, first-rest, cons
 (equal (insert (first x) (isort (rest (merge x y))))
        (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
 	   
+	   
+	   
+	   
+	   
+	   
+	   
 inductive step: assume (isort (rest (merge x y))) == (merge (isort (rest x) (isort y)))
 (equal (insert (first x) (merge (isort (rest x) (isort y))))
        (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
@@ -735,26 +741,28 @@ def. merge when l2 is nil
        (isort x))
 	   
 qed for proof obligation 2
-	
+
+==========================================================================================
 proof for lemma 1:
 (implies (and (lorp x) (lorp y))
          (equal (merge (insert e x) y)
 		        (insert e (merge x y))))   
-
+==============================================
 IS for Insert
 1. (not lorp l) => phi
 2. (lorp l) /\ (endp l) => phi
 3. (lorp l) /\ (not (endp l)) /\ phi|(l (rest l))
 using IS for merge
 
-
-proof obligation 1
+==============================================
+lemma 1 proof obligation 1
 c1. (not (and (lorp x) (lorp y)))
 c2. (and (lorp x) (lorp y))
 contradiction, LHS of implies is false so this is true by PL
 qed for lemma 1 obligation 1
 
-proof obligation 2
+==============================================
+lemma 1 proof obligation 2
 c1. (lorp x)
 c2. (lorp y)
 c3. (endp x)
@@ -770,11 +778,58 @@ def. insert, c3,
 def. merge, c3 
 (equal (merge (list e) y)
        (insert e y))
-{Lemma 2}
+{Lemma 2, see below}
 QED for Lemma 1 proof obligation 2
+
+==============================================	   
+lemma 1 proof obligation 3
+c1. (lorp x)
+c2. (lorp y)
+c3. (not (endp x))
+c4. (endp y)	
+	
+prove 
+(equal (merge (insert e x) y)
+	   (insert e (merge x y)))) 
+
+def. merge, c4
+(equal (insert e x)
+	   (insert e (merge x y)))
+
+def. merge, c3, c4	   
+(equal (insert e x)
+       (insert e x))
 	   
+qed for lemma 1 proof obligation 3
+==============================================	   
+lemma 1 proof obligation 4
+c1. (lorp x)
+c2. (lorp y)
+c3. (not (endp x))
+c4. (not (endp y))
+c5. (implies (and (lorp (rest x) (lorp y))
+             (equal (merge (insert e (rest x)) y)
+			        (insert e (merge (rest x) y)))))
+..............................................
+c6. lorp rest x {c1, c3, first rest, lorp}
+c7. (equal (merge (insert e (rest x)) y)
+			        (insert e (merge (rest x) y))) {c6, c2, c5, MP}
+					
+prove
+(equal (merge (insert e x) y)
+	   (insert e (merge x y)))))
+
+lemma 2
+(equal (merge (merge (list e) x) y)
+       (merge (list e) (merge x y)))
+	  
+how bout no
+(equal (merge (insert e x) y)
+	   (insert e (merge x y)))))
 
 
+	   
+qed for lemma 1 proof obligation 4
 ==========================================================================================
 Lemma 2
 (implies (lorp x) (equal (insert e x)
@@ -827,52 +882,48 @@ c5. (equal (insert e (rest x))
 (equal (insert e x)
 	   (merge (list e) x))
 				
-def. merge, def. list, first-rest	 
-(equal
-  (cond ((endp y)   (list e))
-        ((< e (first y))  
-         (cons e (merge nil y)))
-        (t                          
-         (cons (first y)(merge (list e) (rest y))))))	
-  (insert e y))		 
+def. insert, c2
+(equal ((cond 
+          ((<= e (first x)) (cons e x))
+          (t (cons (first x) (insert e (rest x))))))
+       (merge (list e x) x))
 	
+def. merge, c2, def. list, endp, first-rest ;; plugging into merge and simplifiying (first (list e)) etc.
+(equal ((cond 
+          ((<= e (first x)) (cons e x))
+          (t (cons (first x) (insert e (rest x))))))
+        (cond
+          ((< e (first x))  (cons e (merge nil x)))
+          (t (cons (first x)(merge (list e) (rest x))))))
 def. merge when l1 is nil
-(equal
-  (cond ((endp y)         (list e))
-        ((< e (first y))  (cons e y))
-        (t                (cons (first y)(merge (list e) (rest y)))))	
-  (insert e y))
-	
-def. insert
-(equal
-  (cond ((endp y)         (list e))
-        ((< e (first y))  (cons e y))
-        (t                (cons (first y)(merge (list e) (rest y)))))
-  (cond ((endp y)         (list e))
-        ((<= e (first y)) (cons e y))
-        (t (cons (first y) (insert e (rest y))))))
+(equal ((cond 
+          ((<= e (first x)) (cons e x))
+          (t (cons (first x) (insert e (rest x))))))
+        (cond
+          ((< e (first x))  (cons e x))
+          (t (cons (first x)(merge (list e) (rest x))))))
+		  
+arithmetic, def. merge, def. insert ;; when e == first x, it doesn't matter if we cons e on first or if we cons first x on first since both numbers are the same
+(equal ((cond 
+          ((<= e (first x)) (cons e x))
+          (t (cons (first x) (insert e (rest x))))))
+        (cond
+          ((<= e (first x))  (cons e x))
+          (t (cons (first x)(merge (list e) (rest x))))))
 
-arithmetic, PL, def. insert
-(equal
-  (cond ((endp y)         (list e))
-        ((< e (first y))  (cons e y))
-        (t                (cons (first y)(merge (list e) (rest y)))))
-  (cond ((endp y)         (list e))
-        ((< e (first y))  (cons e y))
-        (t                (cons (first y) (insert e (rest y))))))
-		
-PL, cond-axioms -> the only case we care about is the t case, clearly the other two are equal
-(equal (cons (first y)(merge (list e) (rest y)))))
-       (cons (first y) (insert e (rest y))))
-
-{c4} 
-(equal (cons (first y)(merge (list e) (rest y)))))
-       (cons (first y)(merge (list e) (rest y))))
+cond, PL 
+(equal (cons (first x) (insert e (rest x)))
+       (cons (first x)(merge (list e) (rest x))
 	   
-qed for lemma 1 proof obligation 2
+c4
+(equal (cons (first x) (insert e (rest x)))
+       (cons (first x) (insert e (rest x)))
+	   
+QED for Lemma 2  Proof Obligation 2
 
-
-lemma 1 proof obligation 4
+==============================================	
+QED for Lemma 2
+==========================================================================================
 
 
 |#
