@@ -819,12 +819,60 @@ c8. (equal (merge (insert e (rest x)) y)
 prove
 (equal (merge (insert e x) y)
 	   (insert e (merge x y)))))
+	   
+def. merge, c3, c4, c5
+(equal (merge (insert e x) y)
+       (insert e (cons (first x)(merge (rest x) y)))
+===========================
+proof by cases
+	   
+case 1: e < first x
+case condition, def. insert
+(equal (merge (cons e x) y)
+       (cons e (cons (first x)(merge (rest x) y)))
+def. merge, case condition, c5
+(equal (cons e (cons (first x) (merge (rest x) y)))
+       (cons e (cons (first x)(merge (rest x) y)))
+qed for lemma 1 proof obligation 4 case 1
+===========================
+case 2: (not (e < first x))
+case condition, def. insert
+(equal (merge (cons (first x) (insert e (rest x))) y)
+       (insert e (cons (first x)(merge (rest x) y)))
 
-lemma 2
-(equal (merge (merge (list e) x) y)
-       (merge (list e) (merge x y)))
-assoc. merge	  	   
+case condition, def. insert
+(equal (merge (cons (first x) (insert e (rest x))) y)
+       (cons (first x) (insert e (rest (cons (first x) (merge (rest x) y)))))	   
+
+first rest, cons
+(equal (merge (cons (first x) (insert e (rest x))) y)
+       (cons (first x) (insert e  (merge (rest x) y)))))
+
+c8	  
+(equal (merge (cons (first x) (insert e (rest x))) y)
+       (cons (first x) (merge (insert e (rest x)) y)))))
+ 
+def. merge, case condition, c3, c4, c5, first-rest, cons
+(equal (cons (first x) (merge (insert e (rest x)) y)))))
+       (cons (first x) (merge (insert e (rest x)) y)))))
+
+qed for lemma 1 proof obligation 4 case 2
+===========================
 qed for lemma 1 proof obligation 4
+==============================================
+lemma 1 proof obligation 5
+c1. (lorp x)
+c2. (lorp y)
+c3. (not (endp x))
+c4. (not (endp y))
+c5. (not (first x) < (first y))
+c6. phi|(y (rest y))
+..............................................
+c7. (first x) < (first y) {given in hints}
+c8. nil {c7, c5}
+qed for lemma 1 proof obligation 5
+==============================================
+qed for lemma 1
 ==========================================================================================
 Lemma 2
 (implies (lorp x) (equal (insert e x)
@@ -1234,7 +1282,7 @@ questionnaire.
 The following team members filled out the feedback survey provided by 
 the link above:
 ---------------------------------------------
-<firstname> <LastName>
-<firstname> <LastName>
+Julia Wlochowski
+Dylan Wight
 
 |#
