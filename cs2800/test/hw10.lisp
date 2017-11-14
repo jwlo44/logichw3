@@ -607,18 +607,14 @@ L3:
 (rationalp e) /\ (lorp l2)
     => (merge (list e) l2) = (insert e l2)
 ......................
-
+==========================================================================================
 phi:
   (implies (and (lorp x)(lorp y))
            (equal (isort (merge x y)) 
                   (merge (isort x) (isort y))))
 "the sorted version of two merged lists is the same as the merge of the two lists each sorted"
-this is true because merge puts every pair of elements in order
-also: (orderedp (merge (orderedp x) (orderedp y)))
-also: (orderedp (isort x))
-so: (orderedp (merge (isort x) (isort y)))
 
-
+==============================================
 IS for merge
 1. (not (and (lorp l1) (lorp l2))) => phi
 2. (and (lorp l1) (lorp l2) (endp l1)) => phi
@@ -627,8 +623,71 @@ IS for merge
 5. (and (lorp l1) (lorp l2) (not (endp l1)) (not (endp l2)) (not (< (first l1)(first l2))) (phi|(l2 (rest l2))) => phi
 				  
 >> proving like a PRO *sunglasses emoji*
-cmagic: first x < first y  {given as hint}
-	
+==============================================	
+proof obligation 1:
+contradiction in LHS of implies thanks to induction scheme + phi: (not (and (lorp x) (lorp y))) /\ (and (lorp x) (lorp y))
+==============================================	
+proof obligation 2 for phi_merge_isort:
+x is empty
+c1. lorp x
+c2. lorp y
+c3. endp x
+prove
+(equal (isort (merge x y)) 
+       (merge (isort x) (isort y))
+def. merge, c3
+(equal (isort y)
+       (merge (isort x) (isort y)))
+
+def. isort, c3
+(equal (isort y)
+       (merge nil (isort y)))
+	   
+def. merge when l1 is nil	   
+(equal (isort y)
+       (isort y))
+	   
+qed for proof obligation 2 for phi_merge_isort
+==============================================	
+proof obligation 3 for phi_merge_isort:
+y is empty
+c1. lorp x
+c2. lorp y
+c3. not endp x
+c4. endp y
+
+prove
+(equal (isort (merge x y)) 
+       (merge (isort x) (isort y))
+	   
+def. merge, c3, c4
+(equal (isort x)
+       (merge (isort x) (isort y)))
+
+def. isort, c4
+(equal (isort x)
+       (merge (isort x) nil))
+	   
+def. merge when l2 is nil	   
+(equal (isort x)
+       (isort x))
+	   
+qed for proof obligation 3 for phi_merge_isort
+==============================================
+proof obligation 4 for phi_merge_isort
+c1. lorp x
+c2. lorp y
+c3. not endp x
+c4. not endp y
+c5. (first x) < (first y)
+c6. (implies (and (lorp (rest x))(lorp y))
+           (equal (isort (merge (rest x) y)) 
+                  (merge (isort (rest x)) (isort y))))
+......................................................
+c7. lorp rest x {c1, c3, rest, lorp, endp}
+c8. (equal (isort (merge (rest x) y)) 
+                  (merge (isort (rest x)) (isort y))) {c7, c2, c6, MP}
+
 lemma 1: we probably need this	{taken from hints above}	
 (implies (and (lorp x) (lorp y))
          (equal (merge (insert e x) y)
@@ -644,18 +703,8 @@ def. isort
 def. isort
 (equal (insert (first (merge x y)) (isort (rest (merge x y))))
        (merge (insert (first x) (isort (rest x))) (isort y)))
-
-cmagic, def. merge, first-rest, cons
-(equal (insert (first x) (isort (rest (merge x y))))
-       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
-	   
-	   
-	   
-	   
-	   
-	   
-	   
-inductive step: assume (isort (rest (merge x y))) == (merge (isort (rest x) (isort y)))
+   
+take the hyperloop to induction land
 (equal (insert (first x) (merge (isort (rest x) (isort y))))
        (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
 				
@@ -663,6 +712,35 @@ lemma 1|((e (first x)) (x (isort (rest x))) (y (isort y)))
 (equal (merge (insert (first x) (isort (rest x))) (isort y))
        (merge (insert (first x) (isort (rest x))) (isort y)))
 QED 
+
+
+cmagic, def. merge, first-rest, cons
+(equal (insert (first x) (isort (rest (merge x y))))
+       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))
+	   
+cmagic, first-rest, cons, def. merge
+(equal (insert (first x) (isort (merge (rest x) y))))
+       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))   
+	   
+Lemma 2|(e (first x)) (x (isort (rest (merge x y))))
+(equal (merge (list (first x)) (isort (rest (merge x y))))
+       (merge (insert (first x) (isort (rest x))) (insert (first y) (isort (rest y)))))	   
+
+Lemma 2|
+(equal (merge (list (first x)) (isort (rest (merge x y))))
+       (merge (merge (list (first x)) (isort (rest x))) (merge (list (first y)) (isort (rest y)))))	   
+	   
+Other Undo
+(equal (isort (merge x y))
+       (merge (merge (list (first x)) (isort (rest x))) (merge (list (first y)) (isort (rest y)))))	   
+	   
+Undo
+(equal (merge (list (first x)) (isort (rest (merge x y))))   	   
+	   (merge (isort x) (isort y)))
+	   
+	   
+	
+
 
 this is wrong because I need to explain where I got (merge (isort (rest x)) (isort y)) from
 ok back up where did that inductive hypothesis come from?
@@ -691,56 +769,8 @@ c5. (equal (isort (rest (merge x y)))
 
 							  
 
-
-now to prove the base cases
-proof obligation 1:
-contradiction in LHS of implies thanks to induction scheme + phi having (not (and (lorp x) (lorp y))) and (and (lorp x) (lorp y))
-
-proof obligation 2:
-x is empty
-c1. lorp x
-c2. lorp y
-c3. endp x
-prove
-(equal (isort (merge x y)) 
-       (merge (isort x) (isort y))
-def. merge, c3
-(equal (isort y)
-       (merge (isort x) (isort y)))
-
-def. isort, c3
-(equal (isort y)
-       (merge nil (isort y)))
-	   
-def. merge when l1 is nil	   
-(equal (isort y)
-       (isort y))
-
-	
-proof obligation 3:
-y is empty
-c1. lorp x
-c2. lorp y
-c3. not endp x
-c4. endp y
-
-prove
-(equal (isort (merge x y)) 
-       (merge (isort x) (isort y))
-	   
-def. merge, c3, c4
-(equal (isort x)
-       (merge (isort x) (isort y)))
-
-def. isort, c4
-(equal (isort x)
-       (merge (isort x) nil))
-	   
-def. merge when l2 is nil	   
-(equal (isort x)
-       (isort x))
-	   
-qed for proof obligation 2
+==========================================================================================
+QED for phi_merge_isort
 
 ==========================================================================================
 proof for lemma 1:
@@ -752,7 +782,14 @@ IS for Insert
 1. (not lorp l) => phi
 2. (lorp l) /\ (endp l) => phi
 3. (lorp l) /\ (not (endp l)) /\ phi|(l (rest l))
-using IS for merge
+nah, using IS for merge
+
+IS for merge
+1. (not (and (lorp l1) (lorp l2))) => phi
+2. (and (lorp l1) (lorp l2) (endp l1)) => phi
+3. (and (lorp l1) (lorp l2) (not (endp l1)) (endp l2)) => phi
+4. (and (lorp l1) (lorp l2) (not (endp l1)) (not (endp l2)) (< (first l1)(first l2)) (phi|(l1 (rest l1))) => phi
+5. (and (lorp l1) (lorp l2) (not (endp l1)) (not (endp l2)) (not (< (first l1)(first l2))) (phi|(l2 (rest l2))) => phi
 
 ==============================================
 lemma 1 proof obligation 1
@@ -807,13 +844,14 @@ c1. (lorp x)
 c2. (lorp y)
 c3. (not (endp x))
 c4. (not (endp y))
-c5. (implies (and (lorp (rest x) (lorp y))
+c5. (first x) < (first y)
+c6. (implies (and (lorp (rest x) (lorp y))
              (equal (merge (insert e (rest x)) y)
 			        (insert e (merge (rest x) y)))))
 ..............................................
-c6. lorp rest x {c1, c3, first rest, lorp}
-c7. (equal (merge (insert e (rest x)) y)
-			        (insert e (merge (rest x) y))) {c6, c2, c5, MP}
+c7. lorp rest x {c1, c3, first rest, lorp}
+c8. (equal (merge (insert e (rest x)) y)
+		   (insert e (merge (rest x) y))) {c7, c2, c6, MP}
 					
 prove
 (equal (merge (insert e x) y)
@@ -826,8 +864,15 @@ lemma 2
 how bout no
 (equal (merge (insert e x) y)
 	   (insert e (merge x y)))))
+	   
+def. merge, c3, c4, c5
+(equal (merge (insert e x) y)
+       (insert e (cons (first x)(merge (rest x) y)))
 
 
+(equal (merge (insert e x) y)
+       (insert e (cons (first x)(merge (rest x) y)))
+	   
 	   
 qed for lemma 1 proof obligation 4
 ==========================================================================================
