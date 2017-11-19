@@ -44,7 +44,7 @@ The Beginner level is the next level after Bare Bones level.
 ;Settings specific to ACL2s Beginner mode.
 (acl2s-beginner-settings)
 
-; why why why why 
+; why why why why
 (acl2::xdoc acl2s::defunc) ; almost 3 seconds
 
 (cw "~@0Beginner mode loaded.~%~@1"
@@ -308,8 +308,9 @@ Merge Induction Scheme:
 
 First Obligation:
 (not (and (lorp l1) (lorp l2))) => (sortedp (merge l1 l2)
-{Def merge}
+{Def merge }
 
+not the lhs of implies makes the statement true
 
 Second Obligation:
 (and (lorp l1) (lorp l2) (orderedp l1)(orderedp l2) (endp l1)) => (orderedp (merge l1 l2))
@@ -349,7 +350,8 @@ c3. (orderedp l1)
 c4. (orderedp l2)
 c5. (not (endp l1) (endp l2))
 c6. (< (first l1)(first l2))
-c7. (orderedp (merge (rest l1) l2)) => (orderedp (merge l1 l2))
+c7. (implies (and (lorp (rest l1))(lorp l2)(orderedp (rest l1))(orderedp l2))
+                        (orderedp (merge (rest l1) l2)))
 ....
 c8. (not (endp l1))
 c9. (not (endp l2))
@@ -360,14 +362,13 @@ Prove
 { Def merge, c4, PL }
 (orderedp (cons (first l1) (merge (rest l1) l2)))
 
-axiom1. (<= (first l1) (merge (rest l1) l2))
+L1. (<= (first l1) (merge (rest l1) l2))
 { Def orderedp, not empty cons axiom, c8, axiom1, c7, PL }
 
 QED
 
 
-
-axiom1: (<= (first l1) (first (merge (rest l1) l2)))
+L1: (<= (first l1) (first (merge (rest l1) l2)))
 
 Prove using listp induction scheme
 (endp (rest l1)) => phi
@@ -558,7 +559,78 @@ for extra practice):
 L3:
 (rationalp e) /\ (lorp l2)
     => (merge (list e) l2) = (insert e l2)
-......................
+
+
+(implies (and (lorp x)(lorp y))
+         (equal (isort (merge x y))
+                (merge (isort x) (isort y)))))
+
+Merge Induction Scheme:
+(not (and (lorp l1) (lorp l2))) => phi
+(and (lorp l1) (lorp l2) (endp l1)) => phi
+(and (lorp l1) (lorp l2) (not (endp l1)) (endp l2)) => phi
+(and (lorp l1) (lorp l2) (not (endp l1) (endp l2)) (< (first l1)(first l2)) phi[(l1 (rest l1))]) => phi
+(and (lorp l1) (lorp l2) (not (endp l1) (endp l2) (< (first l1)(first l2))) phi[(l2 (rest l2))]) => phi
+
+Obligation 4
+(and (lorp l1) (lorp l2) (not (endp l1) (endp l2)) (< (first l1)(first l2)) phi[(l1 (rest l1))]) => phi
+
+(implies (and (lorp x)(lorp y))
+         (equal (isort (merge x y))
+                (merge (isort x) (isort y)))))
+
+c1. (lorp l1)
+c2. (lorp l2)
+c3. (not (endp l1))
+c4. (not (endp l2))
+c5. (< (first l1)(first l2))
+c6. (implies (and (lorp (rest l1)))(lorp l2))
+         (equal (isort (merge (rest l1) l2))
+                (merge (isort (rest l1)) (isort l2)))))
+
+Prove
+(equal (isort (merge l1 l2))
+       (merge (isort l1)) (isort l2)))
+{ Def merge, c3, c4, c5, PL }
+(equal (isort (cons (first l1) (merge (rest l1) l2))))
+      (cons (first (isort l1))(merge (rest (isort l1)) (isort l2))))
+{ Def isort, non empty cons axiom }
+(equal (insert (first (cons (first l1) (merge (rest l1) l2))) (isort (rest (cons (first l1) (merge (rest l1) l2)))))))
+    (cons (first (isort l1))(merge (rest (isort l1)) (isort l2)))))
+{ first cons, rest cons }
+(equal (insert (first l1) (isort (merge (rest l1) l2))))
+    (cons (first (isort l1))(merge (rest (isort l1)) (isort l2)))))
+
+
+
+
+(defunc insert (e l)
+  :input-contract (and (rationalp e) (lorp l))
+  :output-contract (lorp (insert e l))
+  (cond ((endp l) (list e))
+        ((<= e (first l)) (cons e l))
+        (t (cons (first l) (insert e (rest l))))))
+
+(defunc isort (l)
+  :input-contract (lorp l)
+  :output-contract (lorp (isort l))
+  (if (endp l)
+    l
+    (insert (first l) (isort (rest l)))))
+
+
+(defunc merge (l1 l2)
+  :input-contract (and (lorp l1)(lorp l2))
+  :output-contract (lorp (merge l1 l2))
+  (cond ((endp l1)   l2)
+        ((endp l2)   l1)
+        ((< (first l1)(first l2))
+         (cons (first l1)(merge (rest l1) l2)))
+        (t
+         (cons (first l2)(merge l1 (rest l2))))))
+
+
+
 
 |#
 
@@ -706,7 +778,7 @@ However, you can't take your mult-l for granted and assume
 "arithmetic" explains why non-empty lists of factors must return a value
 > 1.
 
-......................
+
 
 |#
 
@@ -714,7 +786,103 @@ However, you can't take your mult-l for granted and assume
 PROVE
 Prove phi_prime_factorize:
 (implies (gposp a)(equal a (mult-l (factors a))))
-.............
+
+c1. (gposp a)
+Prove
+(equal a (mult-l (factors a)))
+{ Def factors }
+(equal a (mult-l (factors-help n 2))
+
+L1: (implies (gposp n) (gposp f) (equal n (mult-l (factors-help n f))))
+{ L1, c1, Def gosp, MP }
+
+QED
+
+
+L1: (implies (gposp n) (gposp f) (equal n (mult-l (factors-help n f))))
+
+factors-help induction scheme
+(not (and (gposp n)(gposp f))) => phi
+(and (gposp n)(gposp f) (<= n f)) => phi
+(and (gposp n)(gposp f) (not (<= n f)) (gposp (/ n f) (phi|[n (/ n f))]) => phi
+(and (gposp n)(gposp f) (not (<= n f)) (not (gposp (/ n f)) (phi|[f (+ f 1))]) => phi
+
+First obligation
+c1. (not (and (gposp n)(gposp f)))
+c2. (and (gposp n)(gposp f))
+
+Prove
+(implies (gposp n) (gposp f) (equal n (mult-l (factors-help n f))))
+{ c1, c2, PL, false lhs of implies equals true }
+
+QED
+
+
+Second obligation
+c1. (gposp n)
+c2. (gposp f)
+c3. (<= n f)
+
+Prove
+(implies (gposp a) (gposp f) (equal a (mult-l (factors-help a f))))
+
+{ Def factors-help, c3, PL }
+(equal a (mult-l (list a))
+{ Def mult-l }
+(equal a
+  (if (endp (list a))
+    1
+    (* (first (list a))(mult-l (rest (list a)))))))
+{ Def list, Def endp, PL }
+(equal a (* (first (list a))(mult-l (rest (list a)))))))
+{ first of list, Def mult-l, rest of list is endp, PL }
+(equal a (* a 1))
+{ Def *, Arithmetic }
+
+QED
+
+
+Third obligation
+(and (gposp n)(gposp f) (not (<= n f)) (gposp (/ n f) (phi|[n (/ n f))]) => phi
+c1. (gposp n)
+c2. (gposp f)
+c3. (not (<= n f))
+c4. (gposp (/ n f)
+c5. (implies (gposp (/ n f)) (gposp f) (equal (/ n f) (mult-l (factors-help (/ n f) f))))
+
+Prove
+(equal n (mult-l (factors-help n f)))
+{ Def factors-help, c3, c4, PL }
+(equal n (mult-l (cons f (factors-help (/ n f) f))))
+{ Def mult-l, non-empty cons axiom, PL }
+(equal n (* (first (cons f (factors-help (/ n f) f)))(mult-l (rest (cons f (factors-help (/ n f) f)))))))
+{ first cons axiom }
+(equal n (* (factors-help (/ n f) f)) (mult-l (rest (cons f (factors-help (/ n f) f)))))
+{ rest cons axiom }
+(equal n (* f (mult-l (factors-help (/ n f) f))))
+{ c4, c2, c5, MP, Arithmetic }
+(equal n (* f (/ n f)))
+{ Arithmetic }
+
+QED
+
+
+Forth obligation
+(and (gposp n)(gposp f) (not (<= n f)) (not (gposp (/ n f)) (phi|[f (+ f 1))]) => phi
+c1. (gposp n)
+c2. (gposp f)
+c3. (not (<= n f))
+c4. (not (gposp (/ n f))
+c5. (implies (gposp n) (gposp (+ f 1)) (equal n (mult-l (factors-help n (+ f 1)))))
+
+prove
+(equal n (mult-l (factors-help n f)))
+{ Def factors-help, c3, c4, PL }
+(equal n (mult-l (factors-help n (+ f 1)))))
+{ c1, c2, Def gpos, c5, MP, Arithmetic, PL }
+
+QED
+
 
 |#
 
