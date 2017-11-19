@@ -597,19 +597,8 @@ Prove
 { Def isort, non empty cons axiom }
 (equal (insert (first (cons (first l1) (merge (rest l1) l2))) (isort (rest (cons (first l1) (merge (rest l1) l2)))))))
     (cons (first (isort l1))(merge (rest (isort l1)) (isort l2)))))
-{ first cons, rest cons }
-(equal (insert (first l1) (isort (merge (rest l1) l2))))
-    (cons (first (isort l1))(merge (rest (isort l1)) (isort l2)))))
 
-
-
-
-(defunc insert (e l)
-  :input-contract (and (rationalp e) (lorp l))
-  :output-contract (lorp (insert e l))
-  (cond ((endp l) (list e))
-        ((<= e (first l)) (cons e l))
-        (t (cons (first l) (insert e (rest l))))))
+{ first cons
 
 (defunc isort (l)
   :input-contract (lorp l)
