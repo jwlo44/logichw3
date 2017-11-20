@@ -164,7 +164,7 @@ Obligation 1:
 c1. (not (and (listp l) (natp acc)))
 c2. (listp l) /\ (natp acc) => (how-many-t e l acc) = (+ (how-many e l) acc)
 
-{ c1, c2, MT }
+{ c1, c2, PL }
 
 QED
 
@@ -263,6 +263,8 @@ We're going to selectively filter out all elements in a list that aren't integer
         ((integerp (first l)) (get-integers-t (rest l) (cons (first l) acc)))
         (t                    (get-integers-t (rest l) acc))))
 
+acc = (1 2)
+
 
 (check= (get-integers-t '(b "23" lk ())) ())
 (check= (get-integers-t '(h "ter" -1 aw 9)) '(-1 9))
@@ -280,7 +282,7 @@ We're going to selectively filter out all elements in a list that aren't integer
 that this is a generalization step, i.e., all arguments to get-integers-t
 are variables (no constants). The RHS should include acc.
 
-phi_2 : (listp l) => (get-integers-t l acc) = (rev (app acc (get-integers l)))
+phi_2 : (listp l) /\ ( => (get-integers-t l acc) = (rev (app acc (get-integers l)))
 
 (d) Assuming that lemma in (c) is true and using ONLY equational reasoning,
 prove the main theorem:
@@ -340,7 +342,6 @@ Obligation 2
 Obligation 3
 
 Obligation 4
-
 
 (defunc get-integers-t (l acc)
   :input-contract (and (listp l) (integerlistp acc))
@@ -406,7 +407,20 @@ sum-of-digits of a decimal number.  We will do this in 3 parts:
 ;; inputs as add-digits.
 ;; For example, we have: (check= (add-digits 12345) 15)
 ;; (check= (add-digits* 12345) 15) should also pass.
-..............
+
+(defunc add-digits-t (x acc)
+ :input-contract (and (natp x) (natp acc))
+ :output-contract (natp (add-digits-t x acc))
+ (if (< x 10)
+   (+ x acc)
+   (let ((rem10 (rem x 10)))
+      (add-digits (/ (- x rem10) 10) (+ rem10 acc)))))
+
+(defunc add-digits* (x)
+  :input-contract (natp x)
+  :output-contract (natp (add-digits* x))
+  (add-digits-t x 0))
+
 
 :logic
 #|
@@ -425,7 +439,37 @@ proof:
 
  div-rem :: (natp x) /\ (posp d) => (natp (/ (- x (rem x d)) d))
 
-...........
+add-digits-t induction scheme
+(not (and (natp x) (natp acc))) => phi
+(and (natp x) (natp acc) (< x 10)) => phi
+(and (natp x) (natp acc) (not (< x 10)) phi[((x (/ (- x rem10) 10)) (acc (+ rem10 acc))]) => phi
+
+Obligation 1
+
+Obligation 2
+
+Obligation 3
+c1. (natp x)
+c2. (natp acc)
+c3. (not (< x 10))
+c4. (natp (/ (- x rem10) 10)) /\ (natp (+ rem10 acc))) =>
+        (add-digits-t (/ (- x rem10) 10)) (+ rem10 acc))) = (add-digits (/ (- x rem10) 10))) + (+ rem10 acc))
+
+Prove
+(natp x) /\ (natp acc) => (add-digits-t x acc) = (add-digits x) + acc
+
+
+
+
+
+(defunc add-digits-t (x acc)
+ :input-contract (and (natp x) (natp acc))
+ :output-contract (natp (add-digits-t x acc))
+ (if (< x 10)
+   x
+   (let ((rem10 (rem x 10)))
+      (add-digits (/ (- x rem10) 10) (+ rem10 acc)))))
+
 
 (c) Prove:
 
