@@ -257,8 +257,16 @@ We're going to selectively filter out all elements in a list that aren't integer
 ;; in the list that are not integers (this includes sub-lists of integers)
 ;; acc is an accumulator that collects integers to return.
 (defunc get-integers-t (l acc)
- ......................) ;;Obviously write your own tests too
+  :input-contract (and (listp l) (integerlistp acc))
+  :output-contract (integerlistp (get-integers-t (l acc)))
+  (cond ((endp l)         acc)
+        ((integerp (first l)) (get-integers-t (rest l) (cons (first l) acc)))
+        (t                    (get-integers-t (rest l) acc))))
 
+
+(check= (get-integers-t '(b "23" lk ())) ())
+(check= (get-integers-t '(h "ter" -1 aw 9)) '(-1 9))
+(check= (get-integers-t '("qw" "brc" aw (1 2 3) 89 rt -1)) '(89 -1))
 
 ;; Here is get-integers*, a non-recursive function that calls
 ;; get-integers-t and suitably initializes l and acc :
@@ -271,8 +279,8 @@ We're going to selectively filter out all elements in a list that aren't integer
 (c) Identify a lemma that relates get-integers-t to get-integers. Remember
 that this is a generalization step, i.e., all arguments to get-integers-t
 are variables (no constants). The RHS should include acc.
-....................
 
+phi_2 : (listp l) => (get-integers-t l acc) = (rev (app acc (get-integers l)))
 
 (d) Assuming that lemma in (c) is true and using ONLY equational reasoning,
 prove the main theorem:
@@ -282,8 +290,32 @@ prove the main theorem:
 If you need any "lemmas", note them down as "debt", to be proved later. This should
 include any theorems that we've already proven (you won't need to prove these but you
 still need to list them)
-....................
 
+Prove
+(listp l) => (get-integers* l) = (get-integers l)
+
+Case 1
+c1. (not (listp l))
+
+{ c1, MT }
+QED
+
+Case 2
+c1. (listp  l)
+
+Prove
+(equal (get-integers* l) (get-integers l))
+
+{ Def get-integers* }
+(equal (rev (get-integers-t l ())) (get-integers l))
+{ apply rev to both side, debt_1 }
+(equal (get-integers-t l ()) (rev (get-integers l)))
+{ phi_2, debt_2 }
+
+QED
+
+debt_1: (rev (rev l) = l
+debt_2: (app () l) = l
 
 (e) Prove the lemma in (c). Use the induction scheme of get-integers-t. In
 doing so, you can use the following lemma for free (i.e., you don't need to
@@ -292,13 +324,37 @@ prove it).
 L3: (integerp e) /\ (integerlistp l) => (integerlistp (cons e l))
 
 Again, if you need another lemma, note it as "dept"
-....................
+
+get-integers-t induction scheme:
+(not (and (listp l) (integerlistp acc))) => phi
+(and (listp l) (integerlistp acc) (endp l)) => phi
+(and (listp l) (integerlistp acc) (not (endp l)) (integerp (first l))
+        (phi[((l (rest l)) (acc (cons (first l) acc))])) => phi)
+(and (listp l) (integerlistp acc) (not (endp l)) (not (integerp (first l)))
+        (phi[((l (rest l))])) => phi)
+
+Obligation 1
+
+Obligation 2
+
+Obligation 3
+
+Obligation 4
+
+
+(defunc get-integers-t (l acc)
+  :input-contract (and (listp l) (integerlistp acc))
+  :output-contract (integerlistp (get-integers-t (l acc)))
+  (cond ((endp l)         acc)
+        ((integerp (first l)) (get-integers-t (rest l) (cons (first l) acc)))
+        (t                    (get-integers-t (rest l) acc))))
 
 (f) List here any lemmas that you used in d or e. If any of them are "new", you need
 to prove them. (Hint: all lemmas in my solution have appeared in class/notes
 before but your proof my differ)
 
-..........
+debt_1: (rev (rev l) = l
+debt_2: (app () l) = l
 
 |#
 
