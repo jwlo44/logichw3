@@ -414,7 +414,7 @@ sum-of-digits of a decimal number.  We will do this in 3 parts:
  (if (< x 10)
    (+ x acc)
    (let ((rem10 (rem x 10)))
-      (add-digits (/ (- x rem10) 10) (+ rem10 acc)))))
+      (add-digits-t (/ (- x rem10) 10) (+ rem10 acc)))))
 
 (defunc add-digits* (x)
   :input-contract (natp x)
@@ -488,9 +488,76 @@ Prove the two functions are equivalent.
 Feel free to move the definitions of rem-t and rem* to before add-digits-t
 and modify add-digits-t to use them (once you prove rem* = rem of course)
 |#
-.................
 
 
+(defunc rem-t (x y acc)
+ :input-contract (and (natp x) (posp y) (natp acc))
+ :output-contract (natp (rem-t x y acc))
+ (if (integerp (/ x y))
+   acc
+   (rem-t (- x 1) y (+ acc 1))))
+
+(defunc rem* (x y)
+  :input-contract (and (natp x) (posp y))
+  :output-contract (natp (rem* x y))
+  (rem-t x y 0))
+
+#|
+lemma: (and (natp x) (posp y) (natp acc)) => (rem-t x y acc) = (+ (rem x y) acc)
+
+rem-t induction scheme
+(not (and (natp x) (posp y) (natp acc))) => phi
+(and (natp x) (posp y) (natp acc) (integerp (/ x y))) => phi
+(and (natp x) (posp y) (natp acc) (not (integerp (/ x y)) (phi[((x (- x 1))(acc (+ acc 1))])) => phi
+
+
+Obligation 1
+(and (natp x) (posp y) (natp acc)) => (rem-t x y acc) = (+ (rem x y) acc)
+
+c1. (not (and (natp x) (posp y) (natp acc)))
+c2. (natp x)
+c3. (posp y)
+c4. (natp acc)
+...
+c5. nil { PL, c1, c2, c3, c4 }
+
+QED
+
+Obligation 2
+c1. (natp x)
+c2. (posp y)
+c3. (integerp (/ x y))
+
+Prove
+(equal (rem-t x y acc) (+ (rem x y) acc)))
+{ Def rem-t, c3, PL }
+(equal acc (+ (rem x y) acc)))
+{ Def rem, c3, PL }
+(equal acc (+ 0 acc)))
+{ Algebra }
+
+QED
+
+Obligation 3
+c1. (natp x)
+c2. (posp y)
+c3. (not (integerp (/ x y))
+c4. (and (natp (- x 1)) (posp y) (natp (+ acc 1))) => (rem-t (- x 1) y (+ acc 1)) = (+ (rem (- x 1) y) (+ acc 1))
+
+Prove
+(equal (rem-t x y acc) (+ (rem x y) acc)))
+{ Def rem-t, c3, PL }
+(equal (rem-t (- x 1) y (+ acc 1))) (+ (rem x y) acc)))
+{ Def rem, c3, PL }
+(equal (rem-t (- x 1) y (+ acc 1))) (+ (+ 1 (rem (- x 1) y)))) acc)))
+{ Algebra }
+
+QED
+
+
+
+
+|#
 #| EXTRA PRACTICE ???
 If you want additional practice problems, try writing tail recursive functions
 for the following functions and then prove they are equivalent to the original
