@@ -466,11 +466,91 @@ L3: (lorp l) /\ (consp l) => (in (min-l l) l)
 (This is hint 3) from the list above by the way)
 -----------------------------------
 
-##..............
+(defunc m-ssort (l)
+   :input-contract (lorp l)
+   :output-contract (natp (m-ssort l))
+   (len l))
 
+Proof obligations:
+(> (m-ssort l) (m-ssort (del (min-l l) l)))
+
+c1. (lorp l)
+c2. (not (endp l))
+
+L4: (and (listp l) (in e l)) => (> (len l) (len (del e l)))
+
+Prove
+(> (m-ssort l) (m-ssort (del (min-l l) l)))
+{ Def m-ssort }
+(> (len l) (len (del (min-l l) l)))
+{ L3, c1, c2, L4 }
+
+QED
+      
+L4: (and (listp l) (in e l)) => (> (len l) (len (del e l)))
+
+Induction scheme for in:
+(not (listp l)) => phi
+(and (listp l) (endp l)) => phi
+(and (listp l) (not (endp l)) (equal e (first l))) => phi
+(and (listp l) (not (endp l)) (not (equal e (first l))) (phi[(l (rest l))])) => phi
+
+First Obligation
+c1. (not (listp l))
+
+Prove
+(and (listp l) (in e l)) => (> (len l) (len (del e l)))
+{ c1, PL, nil then is true axiom }
+
+QED
+
+
+Second Obligation
+c1. (listp l)
+c2. (endp l)
+
+Prove
+(and (listp l) (in e l)) => (> (len l) (len (del e l)))
+{ Def in, c2, PL }
+(and (listp l) nil) => (> (len l) (len (del e l)))
+{ PL, nil then is true axiom }
+
+QED
+
+
+Third Obligation
+c1. (listp l)
+c2. (not (endp l))
+c3. (equal e (first l))
+
+Prove
+(and (listp l) (in e l)) => (> (len l) (len (del e l)))
+{ Def in, c2, c3, PL, c1 }
+(> (len l) (len (del e l)))
+{ Def del, c2, c3 }
+(> (len l) (len (rest l)))
+{ Def len of rest axiom }
+
+QED
+
+
+Forth Obligation
+c1. (listp l)
+c2. (not (endp l))
+c3. (not (equal e (first l))
+c4. (and (listp (rest l)) (in e (rest l))) => (> (len (rest l)) (len (del e (rest l))))
+
+Prove
+(and (listp l) (in e l)) => (> (len l) (len (del e l)))
+{ Def in, c2, c3, PL }
+(and (listp l) (in e (rest l))) => (> (len l) (len (del e l)))
+{ Def del, c2, c3 }
+(and (listp l) (in e (rest l))) => (> (len l) (len (cons (first l) (del e (rest l)))))
+{ non empty cons axiom, c4 }
+
+QED
+         
 |#
-
-
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  Section B: IN
