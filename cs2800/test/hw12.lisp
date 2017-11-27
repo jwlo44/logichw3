@@ -413,7 +413,17 @@ A5.
         ((>= (len l2) (len l1)) (f5 l2 (list l1)))
         (t (f5 (rest l1) (rest l2)))))
 
-##..............
+not admissable,
+body contract violation (f5 l2 (list l1)), (not (lorp (list l1)))
+        
+Invalid Induction Scheme:
+(not (and (lorp l1) (lonp l2))) => phi
+(and (lorp l1) (lonp l2) (endp l1)) => phi
+(and (lorp l1) (lonp l2) (not endp l1) (endp l2)) => phi
+(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2))) => phi
+(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (>= (len l2) (len l1)) (phi [(l1 (list l1) => phi
+(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (not (>= (len l2) (len l1)))) => phi
+
 
 |#
 #|
