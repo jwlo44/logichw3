@@ -151,7 +151,8 @@ and what is not.
     l
     (if (equal e (first l))
       (rest l)
-      (cons (first l) (del e (rest l))))))
+      (cons (first l) (del e (rest l))))))#|ACL2s-ToDo-Line|#
+
 ;; Ignore
 (sig del (all (listof :b)) => (listof :b))
 
@@ -270,7 +271,14 @@ admissible,
   :output-contract (natp (m1 x y z))
   (+ x (len z)))
 
-phi_1: (and (> (m1 x y z) (m1 x y (rest z))) (> (m1 x y z) (m1 (- x 10) y z))) ... TODO make sure this is right
+m1 Obligations:
+(and (natp x) (natp y) (listp z) (not (< x 10)) (not (<= (len z) y)) 
+     (> x (len z))) => (> (m1 x y z) (m1 x y (rest z)))
+ 
+(and (natp x) (natp y) (listp z) (not (< x 10)) (not (<= (len z) y)) 
+     (not (> x (len z)))) => (> (m1 x y z) (m1 (- x 10) y z))
+
+Induction Scheme:
 (not (and (natp x) (natp y) (listp z))) => phi_1
 (and (natp x) (natp y) (listp z) (< x 10)) => phi_1
 (and (natp x) (natp y) (listp z) (not (< x 10)) (<= (len z) y)) => phi_1
@@ -291,21 +299,19 @@ phi_1: (and (> (m1 x y z) (m1 x y (rest z))) (> (m1 x y z) (m1 (- x 10) y z))) .
         (f2 (+ x 1) y)
         (f2 x (- y 1)))
       x)))
+;; rewrote using cond
+(defunc f2* (x y)
+     :input-contract (and (integerp x)(integerp y))
+     :output-contract (integerp (f2* x y))
+     (cond ((natp x) y)
+           ((not (natp y)) x)
+           ((<= (unary-- x) y) (f2 (+ x 1) y))
+           (t (f2 x (- y 1)))))
 #|
 ;; Remember, induction schemes rely on converting a function to an equivalent
 ;; cond statement (at least if you want to use the design pattern for creating an IS
 ;; given in the notes)
 
-
-
-  (defunc f2* (x y)
-        :input-contract (and (integerp x)(integerp y))
-        :output-contract (integerp (f2* x y))
-        (cond ((natp x) y)
-              ((not (natp y)) x)
-              ((<= (unary-- x) y) (f2 (+ x 1) y))
-              (t (f2 x (- y 1)))))
-      
               
 admissible,
 (defunc m2 (x y)
@@ -314,7 +320,12 @@ admissible,
   (if (<= (unary-- x) y) 
       (unary-- x) 
       y))
-  
+
+m2 obligations:
+(and (integerp x)(integerp y)(not (natp x)) (natp y) (<= (unary-- x) y)) => (> (m2 x y) (m2 (+ x 1)) y) 
+(and (integerp x)(integerp y)(not (natp x)) (natp y) (not (<= (unary-- x) y))) => (> (m2 x y) (m2 x (- y 1)))
+ 
+Induction Scheme: 
 (not (and (integerp x)(integerp y))) => phi_2
 (and (integerp x)(integerp y)(natp x)) => phi_2
 (and (integerp x)(integerp y)(not (natp x)) (not (natp y))) => phi_2
@@ -328,10 +339,7 @@ admissible,
 (defunc evenp (i)
   :input-contract (integerp i)
   :output-contract (booleanp (evenp i))
-  (integerp (/ i 2)))#|ACL2s-ToDo-Line|#
-
-
-
+  (integerp (/ i 2)))
 
 #|
 A3.
@@ -346,9 +354,19 @@ admissable,
 (defunc m3 (x)
   :input-contract (lorp x)
   :output-contract (natp (m3 x))
-  (if less than 5, 5 - len(x)
-  if even 1
-  else 0
+  (cond ((< (len x) 5) (- 6 (len x)))
+        ((evenp (len x))  1)
+        (t 0)))
+          
+m3 obligations:
+(and (lorp x) (< (len x) 5)) => (> (m3 x) (m3 (cons 10 (app x x))))
+(and (lorp x) (not (< (len x) 5)) (evenp (len x))) => (> (m3 x) (m3 (cons (* 2 (first x)) x)))
+
+Induction Scheme:  
+(not (lorp x)) => phi
+(and (lorp x) (< (len x) 5)  (phi[((x (cons 10 (app x x))))])) => phi
+(and (lorp x) (not (< (len x) 5)) (evenp (len x)) (phi[((x (cons (* 2 (first x)) x)))])) => phi
+(and (lorp x) (not (< (len x) 5)) (not (evenp (len x)))) => phi
 
 
 |#
@@ -367,7 +385,21 @@ A4.
 (Yes, we realize that weave is admissible. Give a measure, measure obligations 
 and induction scheme just the same)
 
-##..............
+admissable,
+(defunc m4 (x y)
+  :input-contract (and (listp x)(listp y))
+  :output-contract (natp (m4 x y))
+  (+ (len x) (len y)))
+ 
+m4 obligation:
+(and (listp x)(listp y)(not (endp x))(not (endp y))) => (> (m4 x y) (m4 (rest x) (rest y)))
+  
+Induction Scheme:  
+(not (and (listp x)(listp y))) => phi
+(and (listp x)(listp y)(endp x)) => phi
+(and (listp x)(listp y)(not (endp x))) => phi
+(and (listp x)(listp y)(not (endp x))(endp y)) => phi
+(and (listp x)(listp y)(not (endp x))(not (endp y))(phi[((x (rest x)(y (rest y)))])) => phi
 
 |#
 
