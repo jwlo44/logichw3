@@ -1,3 +1,61 @@
+; **************** BEGIN INITIALIZATION FOR ACL2s B MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+
+#|
+Pete Manolios
+Fri Jan 27 09:39:00 EST 2012
+----------------------------
+
+Made changes for spring 2012.
+
+
+Pete Manolios
+Thu Jan 27 18:53:33 EST 2011
+----------------------------
+
+The Beginner level is the next level after Bare Bones level.
+
+|#
+
+; Put CCG book first in order, since it seems this results in faster loading of this mode.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "ccg/ccg" :uncertified-okp nil :dir :acl2s-modes :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "base-theory" :dir :acl2s-modes)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "custom" :dir :acl2s-modes :uncertified-okp nil :ttags :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading trace-star and evalable-ld-printing books.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "trace-star" :uncertified-okp nil :dir :acl2s-modes :ttags ((:acl2s-interaction)) :load-compiled-file nil)
+(include-book "hacking/evalable-ld-printing" :uncertified-okp nil :dir :system :ttags ((:evalable-ld-printing)) :load-compiled-file nil)
+
+;theory for beginner mode
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s beginner theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "beginner-theory" :dir :acl2s-modes :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s Beginner mode.") (value :invisible))
+;Settings specific to ACL2s Beginner mode.
+(acl2s-beginner-settings)
+
+; why why why why 
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+(cw "~@0Beginner mode loaded.~%~@1"
+    #+acl2s-startup "${NoMoReSnIp}$~%" #-acl2s-startup ""
+    #+acl2s-startup "${SnIpMeHeRe}$~%" #-acl2s-startup "")
+
+
+(acl2::in-package "ACL2S B")
+
+; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
+;$ACL2s-SMode$;Beginner
 #|
 CS 2800 Homework 11 - Fall 2017
 
@@ -130,7 +188,7 @@ all inputs. We will prove this in several steps.
 phi_1 : (listp l) /\ (natp acc) => (how-many-t e l acc) =  (+ (how-many e l) acc)
          
 
-		 
+                 
 check that this lemma is helpful by seeing if we can use it to prove phi
 (implies (listp l)
          (equal (how-many* e l)
@@ -141,20 +199,20 @@ c1. listp l
 prove
 (equal (how-many* e l)
        (how-many e l))
-	  
+          
 def. how-many*
 (equal (how-many-t e l 0)
        (how-many e l))
-	   
+           
 phi_1
 (equal (+ (how-many e l) 0)
        (how-many e l))
-	   
+           
 arithmetic
 (equal (how-many e l)
        (how-many e l))
 qed for phi
-		 
+                 
 (b) Prove phi_1. Use the induction scheme how-many-t gives rise to. Note
 that how-many-t has an if nested inside other functions. You can rewrite
 it, using cond, before extracting an induction scheme if you want to use
@@ -175,7 +233,7 @@ phi_1 obligation 1
 (implies (and (listp l) (natp acc) (not (and (listp l) (natp acc))))
          (equal (+ (how-many e l) acc)
                 (how-many-t e l acc)))
-																  
+                                                                                                                                  
 c1. (listp l)
 c2. (natp acc)
 c3. (not (and (listp l) (natp acc)))
@@ -204,23 +262,23 @@ def. how-many, c3
 arithmetic
 (equal acc
       (how-many-t e l acc)) 
-	   
+           
 def. how-many-t, c3
-(eqaul acc acc)	 
+(eqaul acc acc)         
  
 qed for phi_1 obligation 2
 ============================================
 phi_1 obligation 3
 (implies (and (listp l) 
               (natp acc)
-			  (not (endp l)) 
-			  (eqaul e (first l))
-			  (implies (and (listp (rest l)) (natp (+ 1 acc)))
-			           (equal (+ (how-many e (rest l)) (+ 1 acc))
-					          (how-many-t e (rest l) (+ 1 acc)))))
+                          (not (endp l)) 
+                          (eqaul e (first l))
+                          (implies (and (listp (rest l)) (natp (+ 1 acc)))
+                                   (equal (+ (how-many e (rest l)) (+ 1 acc))
+                                                  (how-many-t e (rest l) (+ 1 acc)))))
          (equal (+ (how-many e l) acc)
                 (how-many-t e l acc)))
-				
+                                
 c1. listp 1
 c2. natp acc
 c3. not endp l
@@ -230,8 +288,8 @@ c5. implies...
 c6. listp rest l {c1, c3, listp, rest}
 c7. (natp (+ 1 acc)) {c2, arithmetic, natp}
 c8. (equal (+ (how-many e (rest l)) (+ 1 acc))
-		   (how-many-t e (rest l) (+ 1 acc))) {c6, c7, c5, MP}
-		
+           (how-many-t e (rest l) (+ 1 acc))) {c6, c7, c5, MP}
+                
 prove 
 (equal (+ (how-many e l) acc)
        (how-many-t e l acc))
@@ -249,23 +307,23 @@ c8
        (how-many-t e l acc))
 
 def. how-many-t, c3, c4
-	   
+           
 (equal (how-many-t e (rest l) (+ 1 acc))
        (how-many-t e (rest l) (+ 1 acc))
-	   
+           
 qed for phi_1 proof obligation 3
 ============================================
 phi_1 proof obligation 4
 (implies (and (listp l) 
               (natp acc)
-			  (not (endp l))
-			  (not (equal e (first l)))
-			  (implies (and (listp (rest l) (natp acc)))
-			           (equal (+ (how-many e (rest l)) acc)
-					          (how-many-t e (rest l) acc))))
+                          (not (endp l))
+                          (not (equal e (first l)))
+                          (implies (and (listp (rest l) (natp acc)))
+                                   (equal (+ (how-many e (rest l)) acc)
+                                                  (how-many-t e (rest l) acc))))
          (equal (+ (how-many e l) acc)
                 (how-many-t e l acc)))
-				
+                                
 c1. listp l
 c2. natp acc
 c3. not endp l
@@ -274,7 +332,7 @@ c5. implies...
 .....................
 c6. listp rest l {c1, c3, listp, rest}
 c7. (equal (+ (how-many e (rest l)) acc)
-					          (how-many-t e (rest l) acc)) {c6, c2, c5, MP}
+           (how-many-t e (rest l) acc)) {c6, c2, c5, MP}
 
 prove
 (equal (+ (how-many e l) acc)
@@ -291,11 +349,11 @@ arithmetic
 c7
 (equal (how-many-t e (rest l) acc)
        (how-many-t e l acc))
-	
+        
 def. how-many-t, c4, c3
 (equal (how-many-t e (rest l) acc)
        (how-many-t e (rest l) acc)
-	   
+           
 qed for phi_1 proof obligation 4
        
 |#
@@ -328,11 +386,11 @@ We're going to selectively filter out all elements in a list that aren't integer
 ;; in the list that are not integers (this includes sub-lists of integers)
 ;; acc is an accumulator that collects integers to return.
 (defunc get-integers-t (l acc)
-  :input-contract (and (listp l) (listp acc))
+  :input-contract (and (listp l) (integerlistp acc))
   :output-contract (integerlistp (get-integers-t l acc))
   (cond ((endp l) acc)
         ((integerp (first l))  (get-integers-t (rest l) (cons (first l) acc))) 
-		(t (get-integers-t (rest l) acc))))
+         (t                    (get-integers-t (rest l) acc))))
   
 ;; write tests
 (check= (get-integers-t '(b "23" lk ()) nil) ())
@@ -356,11 +414,15 @@ We're going to selectively filter out all elements in a list that aren't integer
 that this is a generalization step, i.e., all arguments to get-integers-t
 are variables (no constants). The RHS should include acc.
 
-(implies (and (list l) (listp acc))
+(implies (and (listp l) (integerlistp acc))
          (equal (get-integers-t l acc)
-		        (app (rev (get-integers l)) acc)))
+                (app (rev (get-integers l)) acc)))
+                
+
+#|
 
 
+|#
 (d) Assuming that lemma in (c) is true and using ONLY equational reasoning,
 prove the main theorem:
 
@@ -372,18 +434,18 @@ still need to list them)
 
 (implies (listp l) 
          (equal (get-integers* l)
-		        (get-integers l)))
-				
+                (get-integers l)))
+                                
 c1. listp l
 
 prove
 (equal (get-integers* l)
-	   (get-integers l))
-	   
+           (get-integers l))
+           
 def. get-integers*
 (equal (rev (get-integers-t l ()))
        (get-integers l))
-	   
+           
 lemma
 (equal (rev (app (rev (get-integers l)) nil))
        (get-integers l))
@@ -391,13 +453,13 @@ lemma
 phi_app_nil (from lecture)
 (equal (rev (rev (get-integers l)))
        (get-integers l))
-	   
+           
 phi_rev_rev (from lecture)
 (equal (get-integers l)
        (get-integers l))
-	 
+         
 qed for part d
-	   
+           
 (e) Prove the lemma in (c). Use the induction scheme of get-integers-t. In
 doing so, you can use the following lemma for free (i.e., you don't need to
 prove it).
@@ -407,8 +469,158 @@ L3: (integerp e) /\ (integerlistp l) => (integerlistp (cons e l))
 Again, if you need another lemma, note it as "dept"
 ....................
 
-TODO
+IS for get-integers-t
+1. (not (and (listp l)(integerlistp acc))) => phi
+2. (and (listp l) (integerlistp acc) (endp l)) => phi
+4. (and (listp l) (integerlistp acc) (not (endp l)) (integerp (first l)) (phi| (l (rest l)) (acc (cons (first l) acc)))) => phi
+5. (and (listp l) (integerlistp acc) (not (endp l)) (not (integerp (first l))) (phi| (l (rest l))) => phi
 
+lemma from c
+(implies (and (listp l) (integerlistp acc))
+         (equal (get-integers-t l acc)
+                (app (rev (get-integers l)) acc)))
+=========================================
+lemma c obligation 1
+
+(implies (and (listp l) (integerlistp acc) (not (and (listp l)(integerlistp acc))))
+         (equal (get-integers-t l acc)
+                (app (rev (get-integers l)) acc)))
+c1. listp l
+c2. integerlistp acc
+c3. not (and (list l) (integerlistp acc))
+..................
+c4. nil {c1, c2, c3, PL}
+
+qed for lemma c obligation 1                
+========================================= 
+lemma c obligation 2
+(implies (and (listp l) (integerlistp acc) (endp l))
+         (equal (get-integers-t l acc)
+                (app (rev (get-integers l)) acc)))
+                
+c1. listp l
+c2. integerlistp acc
+c3. endp l
+
+prove 
+(equal (get-integers-t l acc)
+       (app (rev (get-integers l)) acc)))
+       
+def. get-integers, c3
+(equal (get-integers-t l acc)
+       (app (rev nil) acc)))
+
+def. rev
+(equal (get-integers-t l acc)
+       (app nil acc)))
+   
+def. app
+(equal (get-integers-t l acc)
+       acc)
+       
+def. get-integers-t, c3
+(equal acc acc)
+
+qed for lemma c obligation 2                
+=========================================   
+lemma c obligation 3
+
+(implies (and (listp l) 
+              (integerlistp acc)
+              (not (endp l))
+              (integerp (first l))
+              (implies (and (listp (rest l)) (integerlistp (cons (first l) acc)))
+                       (equal (get-integers-t (rest l) (cons (first l) acc))
+                              (app (rev (get-integers (rest l))) (cons (first l) acc)))))
+         (equal (get-integers-t l acc)
+                (app (rev (get-integers l)) acc)))
+                
+contexts
+c1. listp l
+c2. integerlistp acc
+c3. not endp l
+c4. integerp first l
+c5. implies...
+.......................
+c6. listp rest l {c1, rest, listp}
+c7. (integerlistp (cons (first l) acc))  {c4, c2, L3}
+c8. (equal (get-integers-t (rest l) (cons (first l) acc))
+           (app (rev (get-integers (rest l))) (cons (first l) acc)))  { c6, c7, c5, MP }
+
+           
+prove 
+(equal (get-integers-t l acc)
+       (app (rev (get-integers l)) acc))
+       
+def. get-integers, c3, c4
+(equal (get-integers-t l acc)
+       (app (rev (cons (first l) (get-integers (rest l)))) acc)
+
+def. get-integers-t, c3, c4
+(equal (get-integers-t (rest l) (cons (first l) acc))
+       (app (rev (cons (first l) (get-integers (rest l)))) acc)
+       
+c8
+(equal (app (rev (get-integers (rest l))) (cons (first l) acc))
+       (app (rev (cons (first l) (get-integers (rest l)))) acc))
+       
+phi_app_rev: (app (rev y) (rev x)) == (rev (app x y))
+
+def. app
+(equal (app (rev (get-integers (rest l))) (app (list l) acc))
+       (app (rev (app (list l) (get-integers (rest l)))) acc))
+
+phi_app_rev, def. rev for list of one element
+(equal (app (rev (get-integers (rest l))) (app (list l) acc))
+       (app (app (rev (get-integers (rest l))) (list l))) acc))
+
+assoc. app
+(equal (app (rev (get-integers (rest l))) (app (list l) acc))
+       (app (rev (get-integers (rest l))) (app (list l))) acc)))
+       
+qed for lemma c obligation 3               
+=========================================   
+lemma c obligation 4
+
+(implies (and (listp l) 
+              (integerlistp acc)
+              (not (endp l))
+              (not (integerp (first l)))
+              (implies (and (listp (rest l)) (integerlistp acc))
+                       (equal (get-integers-t (rest l) acc)
+                              (app (rev (get-integers (rest l))) acc))))
+         (equal (get-integers-t l acc)
+                (app (rev (get-integers l)) acc)))
+                
+contexts
+c1. listp l
+c2. integerlistp acc
+c3. not endp l
+c4. not integerp first l
+c5. implies...
+.......................
+c6. listp rest l {c1, rest, listp}
+c7. (equal (get-integers-t (rest l) acc)
+           (app (rev (get-integers (rest l))) acc))  { c6, c2, c5, MP }
+
+prove
+(equal (get-integers-t l acc)
+       (app (rev (get-integers l)) acc))
+       
+def. get-integers, c3, c4
+(equal (get-integers-t l acc)
+       (app (rev (get-integers (rest l))) acc)))
+       
+c7
+(equal (get-integers-t l acc)
+       (get-integers-t (rest l) acc))
+       
+def. get-integers-t, c3, c4
+(equal (get-integers-t (rest l) acc)
+       (get-integers-t (rest l) acc))
+       
+qed for lemma c obligation 4       
+=========================================   
 
 (f) List here any lemmas that you used in d or e. If any of them are "new", you need
 to prove them. (Hint: all lemmas in my solution have appeared in class/notes
@@ -418,6 +630,8 @@ before but your proof my differ)
 lemma from c
 phi_app_nil
 phi_rev_rev
+phi_assoc_app
+phi_app_rev
 
 |#
 
@@ -469,15 +683,15 @@ sum-of-digits of a decimal number.  We will do this in 3 parts:
 ;; inputs as add-digits.
 ;; For example, we have: (check= (add-digits 12345) 15)
 ;; (check= (add-digits* 12345) 15) should also pass.
-:logic
+:program
 (defunc add-digits-t (x acc)
   :input-contract (and (natp x) (natp acc))
   :output-contract (natp (add-digits-t x acc))
   (if (< x 10)
       (+ x acc)
-	  (let ((rem10 (rem x 10)))
-        (add-digits (/ (- x rem10) 10) (+ rem10 acc)))))
-	
+          (let ((rem10 (rem x 10)))
+        (add-digits-t (/ (- x rem10) 10) (+ rem10 acc)))))
+        
 (check= (add-digits-t 12345 0) 15)
 (check= (add-digits-t 1234 5) 15)
 (check= (add-digits-t 123 9) 15)
@@ -487,8 +701,8 @@ sum-of-digits of a decimal number.  We will do this in 3 parts:
 (check= (add-digits-t 4 0) 4)
 (check= (add-digits-t 0 4) 4)
 (check= (add-digits-t 100 0) 1)
-(check= (add-digits-t 101 0) 2)	
-	
+(check= (add-digits-t 101 0) 2)        
+        
 (defunc add-digits* (x)
   :input-contract (natp x)
   :output-contract (natp (add-digits* x))
@@ -520,9 +734,95 @@ proof:
   
 ........... 
   
- TODO 
-  
-  
+IS for add-digits-t
+1. (not (and (natp acc) (natp x))) => phi
+2. (and (natp acc) (natp x) (< x 10)) => phi
+3. (and (natp acc) (natp x) (not (< x 10)) (phi | (x (/ (- x rem10) 10)) (acc (+ rem10 acc))) => phi
+
+conjecture b
+(implies (and (natp x) (natp acc))
+         (equal (add-digits-t x acc)
+                (+ (add-digits x) acc)))
+
+=============================================
+conjecture b proof obligation 1
+(implies (and (natp x) (natp acc) (not (and (natp acc) (natp x))))
+         (equal (add-digits-t x acc)
+                (+ (add-digits x) acc)))
+c1. natp x
+c2. natp acc
+c3. (not (and (natp x) (natp acc)))
+  ............
+c4. nil {c1, c2, c3, PL}
+
+qed for conjecture b proof obligation 1
+=============================================
+conjecture b proof obligation 2
+
+(implies (and (natp x) 
+              (natp acc)
+              (< x 10))
+         (equal (add-digits-t x acc)
+                (+ (add-digits x) acc)))
+                
+c1. natp x
+c2. natp acc
+c3. x < 10
+
+prove 
+(equal (add-digits-t x acc)
+       (+ (add-digits x) acc))
+
+def. add-digits, c3
+(equal (add-digits-t x acc)
+       (+ x acc))
+       
+def. add-digits-t, c3
+(equal (+ x acc)
+       (+ x acc))
+       
+qed for conjecture b obligation 2
+=============================================
+conjectiure b obligation 3
+
+(implies (and (natp x) 
+              (natp acc)
+              (not (< x 10))
+              (implies (and (natp (/ (- x rem10) 10))
+                            (natp (+ rem10 acc)))
+                       (equal (add-digits-t (/ (- x rem10) 10) (+ rem10 acc))
+                              (+ (add-digits (/ (- x rem10) 10)) (+ rem10 acc)))))
+         (equal (add-digits-t x acc)
+                (+ (add-digits x) acc)))
+                
+c1. natp x
+c2. natp acc
+c3. not (< x 10)
+c4. implies...
+.................
+c5. (natp (/ (- x rem10) 10)) {c1, div-rem}
+c6. (natp (+ rem10 acc)) {arithmetic, natp, c2}
+c7. (equal (add-digits-t (/ (- x rem10) 10) (+ rem10 acc))
+           (+ (add-digits (/ (- x rem10) 10)) (+ rem10 acc))) {MP, c5, c6, c4}
+           
+prove
+(equal (add-digits-t x acc)
+       (+ (add-digits x) acc))
+       
+def. add-digits-t, c3
+(equal (add-digits-t (/ (- x rem10) 10) (+ rem10 acc))
+       (+ (add-digits x) acc))
+
+def. add-digits, c3
+(equal (add-digits-t (/ (- x rem10) 10) (+ rem10 acc))
+       (+ (+ rem10 (add-digits (/ (- x rem10) 10))) acc))
+
+c7. 
+(equal (+ (+ rem10 (add-digits (/ (- x rem10) 10))) acc))
+       (+ (+ rem10 (add-digits (/ (- x rem10) 10))) acc))
+       
+qed for conjecture b obligation 3
+==================================================
 (c) Prove:
 
   (natp x) => (add-digits* x) = (add-digits x)
@@ -536,15 +836,15 @@ c1. natp x
 prove
 (equal (add-digits* x)
        (add-digits x))
-	   
+           
 def. add-digits*
 (equal (add-digits-t x 0)
        (add-digits x))
-	   
+           
 lemma from b
 (equal (+ 0 (add-digits x))
        (add-digits x))
-	  
+          
 arithmetic
 (equal (add-digits x)
        (add-digits x))
@@ -564,25 +864,27 @@ and modify add-digits-t to use them (once you prove rem* = rem of course)
   :output-contract (natp (rem-t x y acc))
   (if (integerp (/ x y))
     acc
-    (rem-t (- x 1) y (+ 1 acc)))
+    (rem-t (- x 1) y (+ 1 acc))))
 
 (defunc rem* (x y)
   :input-contract (and (natp x) (posp y))
   :output-contract (natp (rem* x y))
-  (rem-t x y 0))
+  (rem-t x y 0))#|ACL2s-ToDo-Line|#
+
   
 #|
-
+work for part d
+===========================================================================
 lemma for rem-t to rem
 (implies (and (natp x) (posp y) (natp acc))
          (equal (rem-t x y acc)
-		        (+ (rem x y) acc)))
-				
+                (+ (rem x y) acc)))
+                                
 conjecture for rem* = rem
 (implies (and (natp x) (posp y))
          (equal (rem* x y)
                 (rem x y)))
-
+===========================================================================
 check lemma useful by proving conjecture
 c1. natp x
 c2. posp y
@@ -603,11 +905,108 @@ arithmetic
 (equal (rem x y)
        (rem x y))
 qed for rem* = rem
-	   
-TODO
-prove lemma
+===========================================================================           
+proof for lemma
+
+IS for rem-t
+1. (not (natp x) (posp y) (natp acc)) => phi
+2. (and (natp x) (posp y) (natp acc) (integerp (/ x y))) => phi
+3. (and (natp x) (posp y) (natp acc) (not (integerp (/ x y))) (phi| x (- x 1) (+ 1 acc))) => phi
+
+lemma
+(implies (and (natp x) (posp y) (natp acc))
+         (equal (rem-t x y acc)
+                (+ (rem x y) acc)))
+===============================================
+lemma obligation 1
+(implies (and (natp x) (posp y) (natp acc) (not (natp x) (posp y) (natp acc)))
+         (equal (rem-t x y acc)
+                (+ (rem x y) acc)))
+                
+c1. natp x
+c2. posp y
+c3. natp acc
+c4. (not (natp x) (posp y) (natp acc))
+...................
+c5. nil {c1, c2, c3, PL}
+
+qed for lemma obligation 1
+===============================================
+lemma obligation 2
+(implies (and (natp x) (posp y) (natp acc) (integerp (/ x y)))
+         (equal (rem-t x y acc)
+                (+ (rem x y) acc)))
+                
+c1. natp x
+c2. posp y
+c3. natp acc
+c4. (integerp (/ x y))
+
+prove
+(equal (rem-t x y acc)
+       (+ (rem x y) acc))
+       
+def. rem-t, c4
+(equal acc
+      (+ (rem x y) acc))
+      
+def. rem, c4
+(equal acc
+      (+ 0 acc))
+
+arithmetic
+(equal acc acc)
+
+qed for lemma obligation 2
+===============================================
+lemma obligation 3
+
+(implies (and (natp x) 
+              (posp y) 
+              (natp acc) 
+              (not (integerp (/ x y)))
+              (implies (and (natp (- x 1)) (posp y) (natp (+ 1 acc)))
+                       (equal (rem-t (- x 1) y (+ 1 acc))
+                              (+ (rem (- x 1) y) (+ 1 acc)))))
+         (equal (rem-t x y acc)
+                (+ (rem x y) acc)))
+
+c1. natp x
+c2. posp y
+c3. natp acc
+c4. (not (integerp (/ x y)))
+c5. implies...
+.............................
+c6. (not (equal x 0)) {c1, c4, arithmetic} ;; x can't be zero if c4 is true
+c7. (natp (- x 1)) {c6, c1, arithmetic, natp}
+c8. natp (+ 1 acc) {arithmetic, natp, c3}
+c9. (equal (rem-t (- x 1) y (+ 1 acc))
+           (+ (rem (- x 1) y) (+ 1 acc))) {MP, c5, c2, c7, c8}
+           
+prove
+(equal (rem-t x y acc)
+       (+ (rem x y) acc)))
+       
+def. rem-t, c4
+(equal (rem-t (- x 1) y (+ 1 acc))
+       (+ (rem x y) acc))
+       
+def. rem, c4
+(equal (rem-t (- x 1) y (+ 1 acc))
+       (+ (+ 1 (rem (- x 1) y)) acc))
+       
+arithmetic, c9
+(equal (rem-t (- x 1) y (+ 1 acc))
+       (rem-t (- x 1) y (+ 1 acc)))
+       
+qed for lemma obligation 3
+qed for lemma
+qed for conjecture b for real
+ ===============================================
+               
 |#  
 #| EXTRA PRACTICE ???
+no
 If you want additional practice problems, try writing tail recursive functions
 for the following functions and then prove they are equivalent to the original
    - min-l
