@@ -731,10 +731,8 @@ and acc properly.
 
 ;; lemma1 test
 (test? (implies (and (listp l) (lonp acc) (natp c))
-         (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))#|ACL2s-ToDo-Line|#
+         (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))
 
-
-(test? (implies (not (consp l)) (not (listp l))))
 #|
 (d) Write a lemma that relates find-t and find.
 
@@ -864,7 +862,7 @@ find-t Induction Scheme:
  version of weave (weave-t) and a wrapper function weave*
  Keep in mind the order that (first x) and (first y) are being
  added to acc.
- 
+
  (defunc weave (x y)
   :input-contract (and (listp x)(listp y))
   :output-contract (listp (weave x y))
@@ -873,14 +871,32 @@ find-t Induction Scheme:
         (t (cons (first x) 
                  (cons (first y)
                        (weave (rest x)(rest y)))))))
-|#
-##..............
+ |#
+
+ (list 0)
+ (list 0)
  
+ 
+ (defunc weave-t (x y acc)
+  :input-contract (and (listp x) (listp y) (listp acc))
+  :output-contract (listp (weave-t x y acc))
+  (cond ((endp x) (app y acc))
+        ((endp y) (app x acc))
+        (t (weave-t (rest x) (rest y) (cons (first x) (cons (first y) acc))))))
+ 
+ (defunc weave* (x y)
+    :input-contract (and (listp x) (listp y))
+    :output-contract (listp (weave* x y))
+    (rev (weave-t x y '())))#|ACL2s-ToDo-Line|#
+
+ 
+ ; test L1
+ (test? (implies (and (listp x) (listp y) (listp acc)) (equal (rev (weave-t x y nil)) (app (weave x y) nil))))
 
  #|
  b) Now prove that weave* = weave. You should do all the steps we outlined
  in our tail recursive proof recipe.
- ##..............
+(implies (equal (weave-t x y acc) (app (weave* x y) acc))))
 
  |#
  
