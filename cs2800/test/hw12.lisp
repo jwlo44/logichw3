@@ -463,90 +463,116 @@ L3: (lorp l) /\ (consp l) => (in (min-l l) l)
 (This is hint 3) from the list above by the way)
 -----------------------------------
 
+ssort is admissible because it passes function and body contracts and has no syntactic errors.
+also termination, which is what we're proving
+
+measure function for ssort
 (defunc m-ssort (l)
-   :input-contract (lorp l)
-   :output-contract (natp (m-ssort l))
-   (len l))
+  :input-contract (lorp l)
+  :output-contract (natp (m-ssort l))
+  (len l))
+===================================  
+termination proof obligation
+(and (lorp l) (not (endp l))) => (m-ssort l) > (m-ssort (del (min-l l) l))
 
-Proof obligations:
-(> (m-ssort l) (m-ssort (del (min-l l) l)))
+contexts
+c1. lorp l
+c2. not endp l
 
-c1. (lorp l)
-c2. (not (endp l))
+prove
+(m-ssort l) > (m-ssort (del (min-l l) l))
 
-L4: (and (listp l) (in e l)) => (> (len l) (len (del e l)))
+def. m-ssort
+(len l) > (len (del (min-l l) l))
 
-Prove
-(> (m-ssort l) (m-ssort (del (min-l l) l)))
-{ Def m-ssort }
-(> (len l) (len (del (min-l l) l)))
-{ L3, c1, c2, L4 }
+{L-del-decreases-len, L3, c1}
+qed for ssort termination
+=================================================
+proof for L-del-decreases-len
+(implies (and (rationalp e) (lorp l) (in e l))
+         (>(len l)(len (del e l))))
+		 	 
+IS for in
+0. (not (listp l)) => phi
+1. (and (listp l) (endp l)) => phi
+2. (and (listp l) (not (endp l)) (equal e (first l))) => phi
+3. (and (listp l) (not (equal e (first l))) (phi|(l rest l)) => phi
+===================================
+proof obligation 0.
+contradiction in lhs of implies after exportation
+qed for obligation 0
+===================================
+proof obligation 1.
+contexts
+c1. rationalp e
+c2. lorp l
+c3. in e l
+...............
+c4. not endp l {c3, endp, def. in, PL} ;; l has to be non-empty for an element to be in it
 
-QED
-      
-L4: (and (listp l) (in e l)) => (> (len l) (len (del e l)))
+contradiction in base case is ok here because we know we hit the other base case
 
-Induction scheme for in:
-(not (listp l)) => phi
-(and (listp l) (endp l)) => phi
-(and (listp l) (not (endp l)) (equal e (first l))) => phi
-(and (listp l) (not (endp l)) (not (equal e (first l))) (phi[(l (rest l))])) => phi
+qed for obligation 1.
+===================================			 
+proof obligation 2		 
+contexts
+c1. rationalp e
+c2. lorp l
+c3. in e l
+c4. not endp l
+c5. (equal e (first l))
 
-First Obligation
-c1. (not (listp l))
-
-Prove
-(and (listp l) (in e l)) => (> (len l) (len (del e l)))
-{ c1, PL, nil then is true axiom }
-
-QED
-
-
-Second Obligation
-c1. (listp l)
-c2. (endp l)
-
-Prove
-(and (listp l) (in e l)) => (> (len l) (len (del e l)))
-{ Def in, c2, PL }
-(and (listp l) nil) => (> (len l) (len (del e l)))
-{ PL, nil then is true axiom }
-
-QED
-
-
-Third Obligation
-c1. (listp l)
-c2. (not (endp l))
-c3. (equal e (first l))
-
-Prove
-(and (listp l) (in e l)) => (> (len l) (len (del e l)))
-{ Def in, c2, c3, PL, c1 }
+prove
 (> (len l) (len (del e l)))
-{ Def del, c2, c3 }
-(> (len l) (len (rest l)))
-{ Def len of rest axiom }
 
-QED
+looking at rhs
+(len (del e l))
 
+def. del, c4, c5
+(len (rest l))
 
-Forth Obligation
-c1. (listp l)
-c2. (not (endp l))
-c3. (not (equal e (first l))
-c4. (and (listp (rest l)) (in e (rest l))) => (> (len (rest l)) (len (del e (rest l))))
+decreasing len axiom
+(len l) > (len (rest l))
 
-Prove
-(and (listp l) (in e l)) => (> (len l) (len (del e l)))
-{ Def in, c2, c3, PL }
-(and (listp l) (in e (rest l))) => (> (len l) (len (del e l)))
-{ Def del, c2, c3 }
-(and (listp l) (in e (rest l))) => (> (len l) (len (cons (first l) (del e (rest l)))))
-{ non empty cons axiom, c4 }
+qed for obligation 2
+===================================
+proof obligation 3
+contexts
+c1. rationalp e
+c2. lorp l
+c3. in e l
+c4. not endp l
+c5. (not (equal e (first l)))
+c6. (implies (and (lorp (rest l)) (rationalp e) (in e (rest l)))
+             (> (len (rest l)) (len (del e (rest l)))))
 
-QED
-         
+...........................
+c7. lorp rest l {def. lorp, rest, c4}
+c8. in e rest l {c3, c5}
+c9. (> (len (rest l)) (len (del e (rest l)))) {MP, c7, c8, c2, c6}
+
+prove 
+(> (len l) (len (del e l)))		 
+
+(> (len l) (len (del e l)))
+
+def. del, c4, c5
+(> (len l)
+   (len (cons (first l) (del e (rest l)))))
+
+def. len, cons, first-rest
+(> (len l) (+ 1 (len (del e (rest l)))))
+
+def. len, consp, c4
+(> (+ 1 (len (rest l))) (+ 1 (len (del e (rest l)))))
+
+arithmetic
+(len (rest l)) > (len (del e (rest l)))
+c9
+qed for proof obligation 3
+===================================
+qed for lemma-del-decreases-len
+================================================		 
 |#
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
