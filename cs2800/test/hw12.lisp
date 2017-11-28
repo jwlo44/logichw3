@@ -597,23 +597,13 @@ Assumption A1. (listp x) /\ (listp y)/\(listp z) /\ (in e y) =>
 
 B1. Prove (listp x)/\ (listp y) => 
            (in e (app x y)) = ((in e x) \/ (in e y))
-
-
-Phi_permReflect: (listp l) => (perm l l)
-
-A1. (and (listp x) (listp y) (listp z) (in e y)) =>
-               (perm (cons e z) (app x y) = (perm z (app x (del e y)))
                
-app induction scheme:
-(not (and (listp l1) (listp l2))) => phi
-(and (listp l1) (listp l2) (endp l1)) => phi
-(and (listp l1) (listp l2) (not (endp l1)) (phi[((l1 (rest l1)))])) => phi
-
 in induction scheme
 (not (listp l)) => phi
 (and (listp l) (endp l)) => phi
 (and (listp l) (not (endp l)) (equal e (first l))) => phi
 (and (listp l) (not (endp l)) (not (equal e (first l))) (phi[(l (rest l))])) => phi
+
 
 First Obligation
 c1. (not (and (listp l1) (listp l2)))
@@ -631,12 +621,10 @@ c2. (listp y)
 c3. (endp x)
 
 Prove
-(and (listp x) (listp y)) => (in e (app x y)) = (or (in e x) (in e y))
-{ c1, c2, MP, PL }
 (in e (app x y)) = (or (in e x) (in e y))
-{ Def app, c3, PL }
+{ Def app, c3 }
 (in e y) = (or (in e x) (in e y))
-{ Def in, c3, PL }
+{ Def in, c3}
 (in e y) = (or nil (in e y))
 { PL }
 (in e y) = (in e y)
@@ -644,31 +632,55 @@ Prove
 QED
 
 
-Third Obligation
+Third Obligation 
 c1. (listp x)
 c2. (listp y)
 c3. (not (endp x))
-c4. (and (listp (rest x)) (listp y)) => (in e (app (rest x) y)) = (or (in e (rest x)) (in e y))
+c4. (equal (first x) e))
+
 
 Prove
-(and (listp x) (listp y)) => (in e (app x y)) = (or (in e x) (in e y))
-{ c1, c2, MP, PL }
 (in e (app x y)) = (or (in e x) (in e y))
-{ Def app, c3, PL }
+
+{ Def app, c3}
 (in e (cons (first x) (app (rest x) y))) = (or (in e x) (in e y))
 
-Phi_permReflect: (listp l) => (perm l l)
+{Def. in, c4, first-rest, cons}
+t = (or (in e x) (in e y))
 
-A1. (and (listp x) (listp y) (listp z) (in e y)) =>
-               (perm (cons e z) (app x y) = (perm z (app x (del e y)))
+{def. in, c4, c3}
+t = (or t (in e y))
 
-Proof by cases
-a1. (not (equal e (first x)))
+{PL}
+t = t
+QED
+
+
+Fourth Obligation
+c1. (listp x)
+c2. (listp y)
+c3. (not (endp x))
+c4. (not (equal (first x) e))
+c5. (and (listp (rest x)) (listp y)) => (in e (app (rest x) y)) = (or (in e (rest x)) (in e y))
+.............................
+c6. (listp (rest x)) {first-rest, listp, c3}
+c7. (in e (app (rest x) y)) = (or (in e (rest x)) (in e y)) {MP, c2, c5, c4}
+
+
+Prove
+(in e (app x y)) = (or (in e x) (in e y))
+
+{ Def app, c3}
 (in e (cons (first x) (app (rest x) y))) = (or (in e x) (in e y))
-{ Def in 
 
+{Def. in, c3, c4, first-rest, cons}
+(in e (app (rest x) y)) = (or (in e x) (in e y))
 
-a2. (equal e (first x))
+{Def. in, c3, c4}
+(in e (app (rest x) y)) = (or (in e (rest x)) (in e y))
+
+c7
+(in e (app (rest x) y)) = (in e (app (rest x) y))
 
 
 EXTRA QUESTION (no points and purely optional): B1 can be used to prove the following
