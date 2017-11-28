@@ -396,7 +396,6 @@ m4 obligation:
 Induction Scheme:  
 (not (and (listp x)(listp y))) => phi
 (and (listp x)(listp y)(endp x)) => phi
-(and (listp x)(listp y)(not (endp x))) => phi
 (and (listp x)(listp y)(not (endp x))(endp y)) => phi
 (and (listp x)(listp y)(not (endp x))(not (endp y))(phi[((x (rest x)(y (rest y)))])) => phi
 
@@ -418,10 +417,9 @@ body contract violation (f5 l2 (list l1)), (not (lorp (list l1)))
 Invalid Induction Scheme:
 (not (and (lorp l1) (lonp l2))) => phi
 (and (lorp l1) (lonp l2) (endp l1)) => phi
-(and (lorp l1) (lonp l2) (not endp l1) (endp l2)) => phi
-(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2))) => phi
-(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (>= (len l2) (len l1)) (phi [(l1 (list l1) => phi
-(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (not (>= (len l2) (len l1)))) => phi
+(and (lorp l1) (lonp l2) (not endp l1) (endp l2) (phi [(l1 (cons 5 l1)) (l2 (list 5))]) => phi
+(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (>= (len l2) (len l1)) (phi | (l1 (list l1))) => phi
+(and (lorp l1) (lonp l2) (not (endp l1)) (not (endp l2)) (not (>= (len l2) (len l1))) (phi | (l1 (rest l1)) (l2 (rest l2)))) => phi
 
 
 |#
@@ -744,31 +742,81 @@ than find-t and find. Remember add-to-all. There should be no
 constants anywhere in your lemma.
 
 HINT: Use test? to sanity-check your lemma.
-lemma1: (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
 
-L1: (and (listp l) (lonp acc) (natp c)) => 
-     (find-t x l acc c) = (app (rev (add-to-all c (find* x l))) acc)
+l1: (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
+
+test? above
 
 (e) Assuming the lemma is true, prove that find* and find compute
 the same function:
- 
-l1. (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
 
 (listp l) => (find* x l) = (find x l)
-
+===============================================================================
+proof for find* = find
+contexts
 c1. (listp l) 
 
 Prove
 (find* x l) = (find x l)
 { Def find*, PL }
 (rev (find-t x l '() 0)) = (find x l)
-{ rev both sides, rev rev axiom }
-(find-t x l '() 0) = (rev (find x l))
-{ l1, app nil axiom }
+{l1}
+(rev (app (rev (add-to-all 0 (find x l))) nil) = (find x l)
+{phi-app-nil}
+(rev (rev (add-to-all 0 (find x l))) = (find x l)
+{phi-rev-rev}
+(add-to-all 0 (find x l)) = (find x l)
+{lemma-add-0-to-all (see below)}
+(find x l) = (find x l)
 
-QED
+QED for find* = find
+===============================================================================
+lemma-add-0-to-all
+(implies (lonp x) (equal (add-to-all 0 x) x))
 
+IS for listp
+1. (endp l)) => phi
+2. (and (not (endp l)) (phi|(l (rest l))))) => phi
+======================================================
+proof obligation 1 for lemma-add-0-to-all
+c1. lonp x 
+c2. endp x
 
+prove
+(equal (add-to-all 0 x) x)
+
+def. add-to-all, c2
+(equal  nil x)
+
+c2, def. endp
+(equal nil nil)
+qed for obligation 1 
+======================================================
+proof obligation 2 for lemma-add-0-to-all
+c1. lonp x
+c2. not endp x
+c3. (implies (lonp (rest x)) (equal (add-to-all 0 (rest x)) (rest x)))
+..............
+c4. (lonp (rest x)) {c1, rest, c2, def. lonp}
+c5. (equal (add-to-all 0 (rest x)) (rest x))) {MP, c4, c3}
+
+prove
+(equal (add-to-all 0 x) x)
+
+def. add-to-all, c2
+(equal (cons (+ (first x) 0) (add-to-all 0 (rest x))) x)
+
+arithmetic
+(equal (cons (first x) (add-to-all 0 (rest x))) x)
+
+c6
+(equal (cons (first x) (rest x)) x)
+
+cons-first-rest
+QED for lemma-add-0-to-all obligation 2
+======================================================
+QED for lemma-add-0-to-all
+===============================================================================
 (f) Prove the lemma in (d).
 
 In proving the lemma, you can assume the following:
