@@ -151,8 +151,7 @@ and what is not.
     l
     (if (equal e (first l))
       (rest l)
-      (cons (first l) (del e (rest l))))))#|ACL2s-ToDo-Line|#
-
+      (cons (first l) (del e (rest l))))))
 ;; Ignore
 (sig del (all (listof :b)) => (listof :b))
 
@@ -575,7 +574,77 @@ Assumption A1. (listp x) /\ (listp y)/\(listp z) /\ (in e y) =>
 B1. Prove (listp x)/\ (listp y) => 
            (in e (app x y)) = ((in e x) \/ (in e y))
 
-##..............
+
+Phi_permReflect: (listp l) => (perm l l)
+
+A1. (and (listp x) (listp y) (listp z) (in e y)) =>
+               (perm (cons e z) (app x y) = (perm z (app x (del e y)))
+               
+app induction scheme:
+(not (and (listp l1) (listp l2))) => phi
+(and (listp l1) (listp l2) (endp l1)) => phi
+(and (listp l1) (listp l2) (not (endp l1)) (phi[((l1 (rest l1)))])) => phi
+
+in induction scheme
+(not (listp l)) => phi
+(and (listp l) (endp l)) => phi
+(and (listp l) (not (endp l)) (equal e (first l))) => phi
+(and (listp l) (not (endp l)) (not (equal e (first l))) (phi[(l (rest l))])) => phi
+
+First Obligation
+c1. (not (and (listp l1) (listp l2)))
+
+Prove
+(and (listp x) (listp y)) => (in e (app x y)) = (or (in e x) (in e y))
+{ c1, nil-then axiom }
+
+QED
+
+
+Second Obligation
+c1. (listp x)
+c2. (listp y)
+c3. (endp x)
+
+Prove
+(and (listp x) (listp y)) => (in e (app x y)) = (or (in e x) (in e y))
+{ c1, c2, MP, PL }
+(in e (app x y)) = (or (in e x) (in e y))
+{ Def app, c3, PL }
+(in e y) = (or (in e x) (in e y))
+{ Def in, c3, PL }
+(in e y) = (or nil (in e y))
+{ PL }
+(in e y) = (in e y)
+
+QED
+
+
+Third Obligation
+c1. (listp x)
+c2. (listp y)
+c3. (not (endp x))
+c4. (and (listp (rest x)) (listp y)) => (in e (app (rest x) y)) = (or (in e (rest x)) (in e y))
+
+Prove
+(and (listp x) (listp y)) => (in e (app x y)) = (or (in e x) (in e y))
+{ c1, c2, MP, PL }
+(in e (app x y)) = (or (in e x) (in e y))
+{ Def app, c3, PL }
+(in e (cons (first x) (app (rest x) y))) = (or (in e x) (in e y))
+
+Phi_permReflect: (listp l) => (perm l l)
+
+A1. (and (listp x) (listp y) (listp z) (in e y)) =>
+               (perm (cons e z) (app x y) = (perm z (app x (del e y)))
+
+Proof by cases
+a1. (not (equal e (first x)))
+(in e (cons (first x) (app (rest x) y))) = (or (in e x) (in e y))
+{ Def in 
+
+
+a2. (equal e (first x))
 
 
 EXTRA QUESTION (no points and purely optional): B1 can be used to prove the following
@@ -644,14 +713,27 @@ what its index is in the *original* list, you have to keep track of the
 number of elements already processed. Function find-t should thus have
 an extra argument, say c, for that purpose:
 |#
-##..............
-
+(defunc find-t (x l acc c)
+    :input-contract (and (listp l) (lonp acc) (natp c))
+    :output-contract (lonp (find-t x l acc c))
+    (cond ((endp l) acc)
+          ((equal (first l) x) (find-t x (rest l) (cons c acc) (+ c 1)))
+          (t                   (find-t x (rest l) acc (+ c 1)))))
 #|
 (c) We define below a non-recursive function find* that uses find-t to
 compute the same value as find. Note that we need to initialize both c 
 and acc properly.
 |#
-##..............
+(defunc find* (x l)
+    :input-contract (listp l)
+    :output-contract (lonp (find* x l))
+    (rev (find-t x l '() 0)))
+
+;; lemma1 test
+(test? (implies (and (listp l) (lonp acc) (natp c))
+         (equal (find-t x l acc c) (app (rev (add-to-all c (find* x l))) acc))))#|ACL2s-ToDo-Line|#
+
+
 
 #|
 (d) Write a lemma that relates find-t and find.
@@ -662,7 +744,7 @@ than find-t and find. Remember add-to-all. There should be no
 constants anywhere in your lemma.
 
 HINT: Use test? to sanity-check your lemma.
-##..............
+lemma1: (and (listp l) (lonp acc) (integerp c)) => (find-t x l acc c) = (app (add-to-all c (find* x l)) acc)
 
 
 (e) Assuming the lemma is true, prove that find* and find compute
