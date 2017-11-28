@@ -731,10 +731,10 @@ and acc properly.
 
 ;; lemma1 test
 (test? (implies (and (listp l) (lonp acc) (natp c))
-         (equal (find-t x l acc c) (app (rev (add-to-all c (find* x l))) acc))))#|ACL2s-ToDo-Line|#
+         (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))#|ACL2s-ToDo-Line|#
 
 
-
+(test? (implies (not (consp l)) (not (listp l))))
 #|
 (d) Write a lemma that relates find-t and find.
 
@@ -744,13 +744,29 @@ than find-t and find. Remember add-to-all. There should be no
 constants anywhere in your lemma.
 
 HINT: Use test? to sanity-check your lemma.
-lemma1: (and (listp l) (lonp acc) (integerp c)) => (find-t x l acc c) = (app (add-to-all c (find* x l)) acc)
+lemma1: (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
 
+L1: (and (listp l) (lonp acc) (natp c)) => 
+     (find-t x l acc c) = (app (rev (add-to-all c (find* x l))) acc)
 
 (e) Assuming the lemma is true, prove that find* and find compute
 the same function:
+ 
+l1. (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
 
-##..............
+(listp l) => (find* x l) = (find x l)
+
+c1. (listp l) 
+
+Prove
+(find* x l) = (find x l)
+{ Def find*, PL }
+(rev (find-t x l '() 0)) = (find x l)
+{ rev both sides, rev rev axiom }
+(find-t x l '() 0) = (rev (find x l))
+{ l1, app nil axiom }
+
+QED
 
 
 (f) Prove the lemma in (d).
@@ -763,7 +779,75 @@ it's OK to be more specific like this from time to time)
 In addition, during the proof you will need several lemmas that we have
 proven before, and maybe some that are new.
 
-##........................
+(and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
+
+find-t Induction Scheme:
+(not (and (listp l) (lonp acc) (natp c))) => phi
+(and (listp l) (lonp acc) (natp c) (endp l)) => phi
+(and (listp l) (lonp acc) (natp c) (not (endp l)) (equal (first l) x) 
+     phi[((l (rest l)) (acc (cons c acc)) (c (+ c 1)))]) => phi
+(and (listp l) (lonp acc) (natp c) (not (endp l)) (not (equal (first l) x)) 
+     phi[((l (rest l)) (c (+ c 1)))]) => phi
+
+ First Obligation
+ 
+ Second Obligation
+ c1. (listp l)
+ c2. (lonp acc)
+ c3. (natp c)
+ c4. (endp l)
+
+ Prove 
+ (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
+ { Def find-t, c4, PL }
+ acc = (app (rev (add-to-all c (find x l))) acc)
+ { Def find, c4, PL }
+ acc = (app (rev (add-to-all c '())) acc)
+ { Def add-to-all, PL }
+ acc = (app (rev '()) acc)
+ { Def rev }
+  acc = (app '() acc)
+ { app nil axiom }
+
+ QED
+ 
+ Third Obligation
+ c1. (listp l)
+ c2. (lonp acc)
+ c3. (natp c)
+ c4. (not (endp l))
+ c5. (equal (first l) x) 
+ c6. (and (listp (rest l)) (lonp (cons c acc)) (natp (+ c 1)))
+        => (find-t x (rest l) (cons c acc) (+ c 1))
+           = (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
+ 
+ Prove
+ (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
+ { Def find-t, c4, c5, PL }
+ (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all c (find x l))) acc)
+ { Def find, c4, c5, PL }
+ (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all c (cons 0 (add-to-all 1 (find x (rest l)))))) acc)
+ { Def add-to-all, c4, PL, first cons axiom, rest cons axiom }
+ (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (cons (+ 0 c) (add-to-all 1 (find x (rest l))))) acc)
+ { Arithmetic }
+ (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (cons c (add-to-all 1 (find x (rest l))))) acc)
+ { Def rev, c4, first cons axiom, rest cons axiom }
+  (find-t x (rest l) (cons c acc) (+ c 1) = (app (app (rev (add-to-all 1 (find x (rest l)))) c)  acc)
+ { tranativity of app, def app }
+  (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all 1 (find x (rest l)))) (cons c  acc))
+  
+  QED
+
+  
+
+ 
+(defunc find-t (x l acc c)
+    :input-contract (and (listp l) (lonp acc) (natp c))
+    :output-contract (lonp (find-t x l acc c))
+    (cond ((endp l) acc)
+          ((equal (first l) x) (find-t x (rest l) (cons c acc) (+ c 1)))
+          (t                   (find-t x (rest l) acc (+ c 1)))))
+
 
 (g) Prove any new lemmas used in (f).
 (if there are any)
