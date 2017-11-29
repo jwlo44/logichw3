@@ -1,61 +1,3 @@
-; **************** BEGIN INITIALIZATION FOR ACL2s B MODE ****************** ;
-; (Nothing to see here!  Your actual file is after this initialization code);
-
-#|
-Pete Manolios
-Fri Jan 27 09:39:00 EST 2012
-----------------------------
-
-Made changes for spring 2012.
-
-
-Pete Manolios
-Thu Jan 27 18:53:33 EST 2011
-----------------------------
-
-The Beginner level is the next level after Bare Bones level.
-
-|#
-
-; Put CCG book first in order, since it seems this results in faster loading of this mode.
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "ccg/ccg" :uncertified-okp nil :dir :acl2s-modes :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
-
-;Common base theory for all modes.
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "base-theory" :dir :acl2s-modes)
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "custom" :dir :acl2s-modes :uncertified-okp nil :ttags :all)
-
-;Settings common to all ACL2s modes
-(acl2s-common-settings)
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading trace-star and evalable-ld-printing books.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "trace-star" :uncertified-okp nil :dir :acl2s-modes :ttags ((:acl2s-interaction)) :load-compiled-file nil)
-(include-book "hacking/evalable-ld-printing" :uncertified-okp nil :dir :system :ttags ((:evalable-ld-printing)) :load-compiled-file nil)
-
-;theory for beginner mode
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s beginner theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "beginner-theory" :dir :acl2s-modes :ttags :all)
-
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s Beginner mode.") (value :invisible))
-;Settings specific to ACL2s Beginner mode.
-(acl2s-beginner-settings)
-
-; why why why why 
-(acl2::xdoc acl2s::defunc) ; almost 3 seconds
-
-(cw "~@0Beginner mode loaded.~%~@1"
-    #+acl2s-startup "${NoMoReSnIp}$~%" #-acl2s-startup ""
-    #+acl2s-startup "${SnIpMeHeRe}$~%" #-acl2s-startup "")
-
-
-(acl2::in-package "ACL2S B")
-
-; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
-;$ACL2s-SMode$;Beginner
 #|
 
 CS 2800 Homework 12 - Fall 2017
@@ -491,7 +433,7 @@ qed for ssort termination
 proof for L-del-decreases-len
 (implies (and (rationalp e) (lorp l) (in e l))
          (>(len l)(len (del e l))))
-		 	 
+                          
 IS for in
 0. (not (listp l)) => phi
 1. (and (listp l) (endp l)) => phi
@@ -513,8 +455,8 @@ c4. not endp l {c3, endp, def. in, PL} ;; l has to be non-empty for an element t
 contradiction in base case is ok here because we know we hit the other base case
 
 qed for obligation 1.
-===================================			 
-proof obligation 2		 
+===================================                         
+proof obligation 2                 
 contexts
 c1. rationalp e
 c2. lorp l
@@ -552,7 +494,7 @@ c8. in e rest l {c3, c5}
 c9. (> (len (rest l)) (len (del e (rest l)))) {MP, c7, c8, c2, c6}
 
 prove 
-(> (len l) (len (del e l)))		 
+(> (len l) (len (del e l)))                 
 
 (> (len l) (len (del e l)))
 
@@ -572,7 +514,7 @@ c9
 qed for proof obligation 3
 ===================================
 qed for lemma-del-decreases-len
-================================================		 
+================================================                 
 |#
 #|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -759,12 +701,12 @@ c3. not endp x
 c4. not endp y
 c5. (implies (and (listp (rest x)) (listp (rest y)))
              (equal (in e (weave (rest x) (rest y)))
-			        (or (in e (rest x)) (in e (rest y)))))
+                                (or (in e (rest x)) (in e (rest y)))))
 ........................
 c6. listp rest x {listp, rest, c1, c3}
 c7. listp rest y {listp, rest, c2, c4}
 c8. (equal (in e (weave (rest x) (rest y)))
-		   (or (in e (rest x)) (in e (rest y))))) {c6, c7, c5, MP}
+                   (or (in e (rest x)) (in e (rest y))))) {c6, c7, c5, MP}
 
 
 prove 
@@ -900,8 +842,7 @@ and acc properly.
 
 ;; lemma1 test
 (test? (implies (and (listp l) (lonp acc) (natp c))
-         (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))#|ACL2s-ToDo-Line|#
-
+         (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))
 
 (test? (implies (not (consp l)) (not (listp l))))
 #|
@@ -1098,14 +1039,14 @@ def. find-t, c4, c5
 new lemmata: 
 add-0-to-all (proven in e)
 
-proof for add-both-to-all 			   
+proof for add-both-to-all                            
 (implies (and (listp x) (natp n1) (natp n2))
          (equal (add-to-all n1 (add-to-all n2 x))
-		        (add-to-all (+ n1 n2) x)))
-				
+                        (add-to-all (+ n1 n2) x)))
+                                
 IS for listp
 1. endp x => phi
-2. not endp x /\ phi|x rest x => phi				
+2. not endp x /\ phi|x rest x => phi                                
 
 
 proof obligation 1
@@ -1116,11 +1057,11 @@ c4. endp x
 
 prove 
 (equal (add-to-all n1 (add-to-all n2 x))
-		        (add-to-all (+ n1 n2) x)))
-				
+                        (add-to-all (+ n1 n2) x)))
+                                
 def. add-to-all, c4
 (equal nil nil)
-qed for obligation 1				
+qed for obligation 1                                
 
 proof obligation 2
 c1. lonp x
@@ -1129,37 +1070,37 @@ c3. natp n2
 c4. not endp x
 c5. (implies (and (lonp (rest x)) (natp n1) (natp n2))
              (equal (add-to-all n1 (add-to-all n2 (rest x)))
-		            (add-to-all (+ n1 n2) (rest x))))
+                            (add-to-all (+ n1 n2) (rest x))))
 ..........
 c6. lonp rest x {lonp, c4, rest}
 c7. (equal (add-to-all n1 (add-to-all n2 (rest x)))
-		   (add-to-all (+ n1 n2) (rest x))) {MP, c5, c6, c2, c3}
+                   (add-to-all (+ n1 n2) (rest x))) {MP, c5, c6, c2, c3}
 
 prove
 (equal (add-to-all n1 (add-to-all n2 x))
-	   (add-to-all (+ n1 n2) x)))		   
-	   
+           (add-to-all (+ n1 n2) x)))                   
+           
 def. add-to-all, c4
 (equal (add-to-all n1 (cons (+ n2 (first x))(add-to-all n2 (rest x))))
-	   (add-to-all (+ n1 n2) x))		   
+           (add-to-all (+ n1 n2) x))                   
 
 def. add-to-all, cons, endp, first-rest
 (equal (cons (+ n1 (+ n2 (first x))) (add-to-all n1 (add-to-all n2 (rest x))))
-	   (add-to-all (+ n1 n2) x))		   
-	   
+           (add-to-all (+ n1 n2) x))                   
+           
 c7
 (equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
-	   (add-to-all (+ n1 n2) x))
+           (add-to-all (+ n1 n2) x))
 
 def. add-to-all, c4
 (equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
-	   (cons (+ (+ n1 n2) (first x)) (add-to-all (+ n1 n2) (rest x)))
-	   
-arithmethic	   
-(equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))	   
+           (cons (+ (+ n1 n2) (first x)) (add-to-all (+ n1 n2) (rest x)))
+           
+arithmethic           
+(equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))           
        (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
-	   
-qed for obligation 2	   
+           
+qed for obligation 2           
 |#
 
 #|
@@ -1181,8 +1122,26 @@ qed for obligation 2
                  (cons (first y)
                        (weave (rest x)(rest y)))))))
 |#
-##..............
+
+ (list 0)
+ (list 0)
  
+ 
+ (defunc weave-t (x y acc)
+  :input-contract (and (listp x) (listp y) (listp acc))
+  :output-contract (listp (weave-t x y acc))
+  (cond ((endp x) (app y acc))
+        ((endp y) (app x acc))
+        (t (weave-t (rest x) (rest y) (cons (first x) (cons (first y) acc))))))
+ 
+ (defunc weave* (x y)
+    :input-contract (and (listp x) (listp y))
+    :output-contract (listp (weave* x y))
+    (rev (weave-t x y '())))
+ 
+ ; test L1
+ (test? (implies (and (listp x) (listp y) (listp acc)) (equal (rev (weave-t x y nil)) (app (weave x y) nil))))
+
 
  #|
  b) Now prove that weave* = weave. You should do all the steps we outlined
