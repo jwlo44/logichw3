@@ -697,9 +697,142 @@ the exam if you want.
 B2. Prove (listp x)/\ (listp y) => 
            (in e (weave x y)) = ((in e x) \/ (in e y))
 
-##..............
+##
+
+IS for weave
+1. not (and (listp x) (listp y))) => phi
+2. (and (listp x) (listp y) (endp x)) => phi
+3. (and (listp x) (listp y) (not(endp x)) (endp y)) => phi
+4. (and (listp x) (listp y) (not(endp x)) (not (endp y)) (phi | (x (rest x)) (y (rest y)) => phi
+
+==========================================
+proof obligation 1. 
+c1. not (and listp x listp y)
+c2. listp x
+c3. listp y
+....
+c4 nil {c1, c2, c3, PL}
+nil => any = t
+qed for obligation 1
+==========================================
+proof obligation 2.
+c1. listp x
+c2. listp y
+c3. endp x
+
+prove 
+(in e (weave x y)) = ((in e x) \/ (in e y))
+
+c3, def. in
+(in e (weave x y)) = (nil \/ (in e y))
+
+PL
+(in e (weave x y)) = (in e y)
+
+def. weave, c3
+(in e y) = (in e y)
+qed for obligation 2
+==========================================
+proof obligation 3.
+c1. listp x
+c2. listp y
+c3. not endp x
+c4. endp y
+
+prove 
+(in e (weave x y)) = ((in e x) \/ (in e y))
+
+c4, def. in
+(in e (weave x y)) = (((in e x) \/ nil))
+
+PL
+(in e (weave x y)) = (in e x)
+
+def. weave, c3, c4
+(in e y) = (in e y)
+qed for obligation 3
+==========================================
+obligation 4
+c1. listp x
+c2. listp y
+c3. not endp x
+c4. not endp y
+c5. (implies (and (listp (rest x)) (listp (rest y)))
+             (equal (in e (weave (rest x) (rest y)))
+			        (or (in e (rest x)) (in e (rest y)))))
+........................
+c6. listp rest x {listp, rest, c1, c3}
+c7. listp rest y {listp, rest, c2, c4}
+c8. (equal (in e (weave (rest x) (rest y)))
+		   (or (in e (rest x)) (in e (rest y))))) {c6, c7, c5, MP}
 
 
+prove 
+(in e (weave x y)) = ((in e x) \/ (in e y))
+
+proof by cases
+========================
+case 1: first x = e
+
+def. in, case 1, c3
+(in e (weave x y)) = (t \/ (in e y))
+
+pl
+(in e (weave x y)) = t
+
+def. weave, c3, c4
+(in e (cons (first x) (cons (first y) (weave (rest x) (rest y))))) = t
+
+first-rest, def. in, case 1
+t = t
+qed for case 1
+========================
+case 2: 
+c8. (not (equal (first x) e))
+c9. (equal (first y) e)
+
+def. in, c9, PL
+(in e (weave x y)) = t
+
+def. weave, c3, c4
+(in e (cons (first x) (cons (first y) (weave (rest x) (rest y))))) = t
+
+def. in, c8, cons, first-rest
+(in e (cons (first y) (weave (rest x) (rest y)))) = t
+
+c9, def. in, consp
+t = t
+qed for case 2
+========================
+case 3:
+c8. (not (equal (first x) e))
+c9. (not (equal (first y) e))
+
+def. in, c8, c9, c3, c4
+(in e (weave x y)) = (or (in e (rest x)) (in e (rest y)))
+
+def. weave, c3, c4
+(in e (cons (first x) (cons (first y) (weave (rest x) (rest y))))) =
+(or (in e (rest x)) (in e (rest y)))
+
+c8, def. in, cons, first-rest
+(in e (cons (first y) (weave (rest x) (rest y)))) =
+(or (in e (rest x)) (in e (rest y)))
+
+c9, def. in, cons, first-rest
+(in e (weave (rest x) (rest y))) = 
+(or (in e (rest x)) (in e (rest y)))
+
+c7
+(in e (weave (rest x) (rest y))) =
+(in e (weave (rest x) (rest y)))
+
+qed for case 3
+========================
+qed for obligation 4
+==========================================
+qed for all i care
+=============================================================
 
 EXTRA (no points): prove 
 Phi_permWA: (listp x)/\(listp y) =>(perm (weave x y)(app x y)) 
@@ -868,15 +1001,25 @@ proven before, and maybe some that are new.
 (and (listp l) (lonp acc) (natp c)) => (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
 
 find-t Induction Scheme:
-(not (and (listp l) (lonp acc) (natp c))) => phi
-(and (listp l) (lonp acc) (natp c) (endp l)) => phi
-(and (listp l) (lonp acc) (natp c) (not (endp l)) (equal (first l) x) 
+1. (not (and (listp l) (lonp acc) (natp c))) => phi
+2. (and (listp l) (lonp acc) (natp c) (endp l)) => phi
+3. (and (listp l) (lonp acc) (natp c) (not (endp l)) (equal (first l) x) 
      phi[((l (rest l)) (acc (cons c acc)) (c (+ c 1)))]) => phi
-(and (listp l) (lonp acc) (natp c) (not (endp l)) (not (equal (first l) x)) 
+4. (and (listp l) (lonp acc) (natp c) (not (endp l)) (not (equal (first l) x)) 
      phi[((l (rest l)) (c (+ c 1)))]) => phi
-
+=============================
  First Obligation
+ c1. (not (and (listp l) (lonp acc) (natp c)))
+ c2. listp l
+ c3. lonp acc
+ c4. natp c
+ ..............
+ c5. nil {c1, c2, c3, c4, PL}
  
+ nil => any == t
+ qed for first obligation 
+ 
+============================= 
  Second Obligation
  c1. (listp l)
  c2. (lonp acc)
@@ -885,18 +1028,18 @@ find-t Induction Scheme:
 
  Prove 
  (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
- { Def find-t, c4, PL }
+ { Def find-t, c4 }
  acc = (app (rev (add-to-all c (find x l))) acc)
- { Def find, c4, PL }
+ { Def find, c4 }
  acc = (app (rev (add-to-all c '())) acc)
- { Def add-to-all, PL }
+ { Def add-to-all }
  acc = (app (rev '()) acc)
  { Def rev }
   acc = (app '() acc)
  { app nil axiom }
 
  QED
- 
+ =============================
  Third Obligation
  c1. (listp l)
  c2. (lonp acc)
@@ -906,38 +1049,44 @@ find-t Induction Scheme:
  c6. (and (listp (rest l)) (lonp (cons c acc)) (natp (+ c 1)))
         => (find-t x (rest l) (cons c acc) (+ c 1))
            = (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
+ ...................................
+ c7. listp (rest l){c1, c4, rest, listp}
+ c8. lonp (cons c acc) {c2, c3, hint from above akak def. lonp}
+ c9. (natp (+ c 1)) {arithmetic, def. natp}
+ c10. (find-t x (rest l) (cons c acc) (+ c 1)) = (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
  
  Prove
- (find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
- { Def find-t, c4, c5, PL }
- (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all c (find x l))) acc)
- { Def find, c4, c5, PL }
- (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all c (cons 0 (add-to-all 1 (find x (rest l)))))) acc)
- { Def add-to-all, c4, PL, first cons axiom, rest cons axiom }
- (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (cons (+ 0 c) (add-to-all 1 (find x (rest l))))) acc)
- { Arithmetic }
- (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (cons c (add-to-all 1 (find x (rest l))))) acc)
- { Def rev, c4, first cons axiom, rest cons axiom }
-  (find-t x (rest l) (cons c acc) (+ c 1) = (app (app (rev (add-to-all 1 (find x (rest l)))) c)  acc)
- { tranativity of app, def app }
-  (find-t x (rest l) (cons c acc) (+ c 1) = (app (rev (add-to-all 1 (find x (rest l)))) (cons c  acc))
-  
-  QED
-
-  
-
+(find-t x l acc c) = (app (rev (add-to-all c (find x l))) acc)
  
-(defunc find-t (x l acc c)
-    :input-contract (and (listp l) (lonp acc) (natp c))
-    :output-contract (lonp (find-t x l acc c))
-    (cond ((endp l) acc)
-          ((equal (first l) x) (find-t x (rest l) (cons c acc) (+ c 1)))
-          (t                   (find-t x (rest l) acc (+ c 1)))))
+def. find-t, c4, c5
+(find-t x (rest l) (cons c acc) (+ c 1))) = (app (rev (add-to-all c (find x l))) acc)
+ 
+ c10
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = (app (rev (add-to-all c (find x l))) acc)
+ 
+ def. find, c4, c5
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (add-to-all c (cons 0 (add-to-all 1 (find x (rest l)))) acc)
+ 
+ def. add-to-all, arithmetic
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (cons c (add-to-all c  (add-to-all 1 (find x (rest l)))) acc)
+ 
+ lemma-add-both-to-all
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (cons c (add-to-all (+ c 1) (find x (rest l)))) acc)
+ 
+lemma-app-cons-rev
+(app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+(app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
 
-
+qed
+ 
 (g) Prove any new lemmas used in (f).
 (if there are any)
-##..............
+##
+new lemmata: 
+add-0-to-all (proven in e)
  
 |#
 
