@@ -681,7 +681,7 @@ Prove
 
 c7
 (in e (app (rest x) y)) = (in e (app (rest x) y))
-
+QED
 
 EXTRA QUESTION (no points and purely optional): B1 can be used to prove the following
 B1b: (listp x)/\(listp y) => ((in e (app x y)) = (in e x) \/ (in e y))
@@ -831,7 +831,7 @@ qed for case 3
 ========================
 qed for obligation 4
 ==========================================
-qed for all i care
+qed for b2
 =============================================================
 
 EXTRA (no points): prove 
@@ -1062,32 +1062,104 @@ def. find-t, c4, c5
 (find-t x (rest l) (cons c acc) (+ c 1))) = (app (rev (add-to-all c (find x l))) acc)
  
  c10
- (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = (app (rev (add-to-all c (find x l))) acc)
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (add-to-all c (find x l))) acc)
  
  def. find, c4, c5
  (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
- (app (rev (add-to-all c (cons 0 (add-to-all 1 (find x (rest l)))) acc)
+ (app (rev (add-to-all c (cons 0 (add-to-all 1 (find x (rest l)))))) acc)
  
- def. add-to-all, arithmetic
+ def. add-to-all, arithmetic, cons
  (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
- (app (rev (cons c (add-to-all c  (add-to-all 1 (find x (rest l)))) acc)
+ (app (rev (cons c (add-to-all c  (add-to-all 1 (find x (rest l)))))) acc)
  
  lemma-add-both-to-all
  (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
- (app (rev (cons c (add-to-all (+ c 1) (find x (rest l)))) acc)
+ (app (rev (cons c (add-to-all (+ c 1) (find x (rest l))))) acc)
  
-lemma-app-cons-rev
-(app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
-(app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
+ def. rev, cons, endp, first-rest
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (app (rev (add-to-all (+ c 1) (find x (rest l)))) (list c)) acc)
+ 
+ assoc. app
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (app (list c) acc))
+ 
+ def. app, list, consp, endp
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc)) = 
+ (app (rev (add-to-all (+ c 1) (find x (rest l)))) (cons c acc))
+ 
+ qed
 
-qed
  
 (g) Prove any new lemmas used in (f).
 (if there are any)
 ##
 new lemmata: 
 add-0-to-all (proven in e)
- 
+
+proof for add-both-to-all 			   
+(implies (and (listp x) (natp n1) (natp n2))
+         (equal (add-to-all n1 (add-to-all n2 x))
+		        (add-to-all (+ n1 n2) x)))
+				
+IS for listp
+1. endp x => phi
+2. not endp x /\ phi|x rest x => phi				
+
+
+proof obligation 1
+c1. lonp x
+c2. natp n1
+c3. natp n2
+c4. endp x
+
+prove 
+(equal (add-to-all n1 (add-to-all n2 x))
+		        (add-to-all (+ n1 n2) x)))
+				
+def. add-to-all, c4
+(equal nil nil)
+qed for obligation 1				
+
+proof obligation 2
+c1. lonp x
+c2. natp n1
+c3. natp n2
+c4. not endp x
+c5. (implies (and (lonp (rest x)) (natp n1) (natp n2))
+             (equal (add-to-all n1 (add-to-all n2 (rest x)))
+		            (add-to-all (+ n1 n2) (rest x))))
+..........
+c6. lonp rest x {lonp, c4, rest}
+c7. (equal (add-to-all n1 (add-to-all n2 (rest x)))
+		   (add-to-all (+ n1 n2) (rest x))) {MP, c5, c6, c2, c3}
+
+prove
+(equal (add-to-all n1 (add-to-all n2 x))
+	   (add-to-all (+ n1 n2) x)))		   
+	   
+def. add-to-all, c4
+(equal (add-to-all n1 (cons (+ n2 (first x))(add-to-all n2 (rest x))))
+	   (add-to-all (+ n1 n2) x))		   
+
+def. add-to-all, cons, endp, first-rest
+(equal (cons (+ n1 (+ n2 (first x))) (add-to-all n1 (add-to-all n2 (rest x))))
+	   (add-to-all (+ n1 n2) x))		   
+	   
+c7
+(equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
+	   (add-to-all (+ n1 n2) x))
+
+def. add-to-all, c4
+(equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
+	   (cons (+ (+ n1 n2) (first x)) (add-to-all (+ n1 n2) (rest x)))
+	   
+arithmethic	   
+(equal (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))	   
+       (cons (+ n1 (+ n2 (first x))) (add-to-all (+ n1 n2) (rest x)))
+	   
+qed for obligation 2	   
 |#
 
 #|
