@@ -1,3 +1,61 @@
+; **************** BEGIN INITIALIZATION FOR ACL2s B MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+
+#|
+Pete Manolios
+Fri Jan 27 09:39:00 EST 2012
+----------------------------
+
+Made changes for spring 2012.
+
+
+Pete Manolios
+Thu Jan 27 18:53:33 EST 2011
+----------------------------
+
+The Beginner level is the next level after Bare Bones level.
+
+|#
+
+; Put CCG book first in order, since it seems this results in faster loading of this mode.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "ccg/ccg" :uncertified-okp nil :dir :acl2s-modes :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "base-theory" :dir :acl2s-modes)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "custom" :dir :acl2s-modes :uncertified-okp nil :ttags :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading trace-star and evalable-ld-printing books.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "trace-star" :uncertified-okp nil :dir :acl2s-modes :ttags ((:acl2s-interaction)) :load-compiled-file nil)
+(include-book "hacking/evalable-ld-printing" :uncertified-okp nil :dir :system :ttags ((:evalable-ld-printing)) :load-compiled-file nil)
+
+;theory for beginner mode
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s beginner theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "beginner-theory" :dir :acl2s-modes :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s Beginner mode.") (value :invisible))
+;Settings specific to ACL2s Beginner mode.
+(acl2s-beginner-settings)
+
+; why why why why 
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+(cw "~@0Beginner mode loaded.~%~@1"
+    #+acl2s-startup "${NoMoReSnIp}$~%" #-acl2s-startup ""
+    #+acl2s-startup "${SnIpMeHeRe}$~%" #-acl2s-startup "")
+
+
+(acl2::in-package "ACL2S B")
+
+; ***************** END INITIALIZATION FOR ACL2s B MODE ******************* ;
+;$ACL2s-SMode$;Beginner
 #|
 
 CS 2800 Homework 12 - Fall 2017
@@ -844,7 +902,6 @@ and acc properly.
 (test? (implies (and (listp l) (lonp acc) (natp c))
          (equal (find-t x l acc c) (app (rev (add-to-all c (find x l))) acc))))
 
-(test? (implies (not (consp l)) (not (listp l))))
 #|
 (d) Write a lemma that relates find-t and find.
 
@@ -1130,23 +1187,134 @@ qed for obligation 2
  (defunc weave-t (x y acc)
   :input-contract (and (listp x) (listp y) (listp acc))
   :output-contract (listp (weave-t x y acc))
-  (cond ((endp x) (app y acc))
-        ((endp y) (app x acc))
-        (t (weave-t (rest x) (rest y) (cons (first x) (cons (first y) acc))))))
+  (cond ((endp x) (app (rev acc) y))
+        ((endp y) (app (rev acc) x))
+        (t (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))))))
+ 
+ (check= (weave '(0 2) '(1)) '(0 1 2))
+ (check= (weave-t '(0 2) '(1) nil) '(0 1 2))
+  (check= (weave '(0 2 4) '(1)) '(0 1 2 4))
+  (check= (weave-t '(0 2 4) '(1) nil) '(0 1 2 4))
+
+
  
  (defunc weave* (x y)
     :input-contract (and (listp x) (listp y))
     :output-contract (listp (weave* x y))
-    (rev (weave-t x y '())))
+    (weave-t x y '()))#|ACL2s-ToDo-Line|#
+
  
  ; test L1
- (test? (implies (and (listp x) (listp y) (listp acc)) (equal (rev (weave-t x y nil)) (app (weave x y) nil))))
+ (test? (implies (and (listp x) (listp y) (listp acc)) (equal (weave-t x y acc) (app (rev acc) (weave x y)))))
 
 
  #|
  b) Now prove that weave* = weave. You should do all the steps we outlined
  in our tail recursive proof recipe.
- ##..............
+ 
+ 
+ (and (listp x) (listp y)) => (weave* x y) = (weave x y)
+ 
+ c1. (listp x)
+ c2. (listp y))
+ l1. (and (listp x) (listp y) (listp acc)) => (weave-t x y acc) = (app (rev acc) (weave x y))
+
+ Prove 
+ (weave* x y) = (weave x y)
+ { Def weave* }
+ (weave-t x y '()) = (weave x y)
+ { c1, c2, def listp, l1 }
+ (app (rev '()) (weave x y)) = (weave x y)
+ { Def rev, empty app axiom }
+ (weave x y) = (weave x y)
+ 
+ QED
+ 
+ =================================
+ Proof for l1
+ (and (listp x) (listp y) (listp acc)) => (weave-t x y acc) = (app (rev acc) (weave x y))
+ 
+ weave-t induction scheme:
+ (not (and (listp x) (listp y) (listp acc))) => phi
+ (and (listp x) (listp y) (listp acc) (endp x)) => phi
+ (and (listp x) (listp y) (listp acc) (not (endp x)) (endp y)) => phi
+ (and (listp x) (listp y) (listp acc) (not (endp x)) (not (endp y)) 
+      phi[((x (rest x)) (y (rest y)) (acc (cons (first y) (cons (first x) acc))))]) => phi
+
+ First obligation:
+ c1. (not (and (listp x) (listp y) (listp acc)))
+ c2. (listp x)
+ c3. (listp y)
+ ...
+ c4. nil {c1, c2, c3, PL}
+ 
+ nil => any = t
+ QED for First obligation
+ 
+ Second obligation:
+ c1. (listp x)
+ c2. (listp y)
+ c3. (listp acc)
+ c4. (endp x)
+ 
+  Prove
+  (weave-t x y acc) = (app (rev acc) (weave x y))
+  { Def weave-t, c4, PL }
+  (app (rev acc) y) = (app (rev acc) (weave x y))
+  { Def weave, c4, PL }
+  (app (rev acc) y) = (app (rev acc) y)
+  
+  QED for second obligation
+
+  Third obligation
+  c1. (listp x)
+  c2. (listp y)
+  c3. (listp acc)
+  c4. (not (endp x))
+  c5. (endp y)
+  
+  Prove
+  (weave-t x y acc) = (app (rev acc) (weave x y))
+  { Def weave-t, c4, c5, PL }
+  (app (rev acc) x) = (app (rev acc) (weave x y))
+  { Def weave, c4, c5, PL }
+  (app (rev acc) x) = (app (rev acc) x)
+  
+  QED for third obligation
+
+  Fourth obligation
+  c1. (listp x)
+  c2. (listp y)
+  c3. (listp acc)
+  c4. (not (endp x))
+  c5. (not (endp y))
+  c6. (and (listp (rest x)) (listp (rest y)) (listp (cons (first y) (cons (first x) acc)))) 
+       => (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) 
+           = (app (rev (cons (first y) (cons (first x) acc))) (weave (rest x) (rest y)))
+  
+  Prove
+  (weave-t x y acc) = (app (rev acc) (weave x y))
+  { Def weave-t, c4, c5, PL }
+  (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) = (app (rev acc) (weave x y))
+  { Def weave, c4, c5, PL }
+  (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
+  { c6, PL }
+    (app (rev (cons (first y) (cons (first x) acc))) (weave (rest x) (rest y)))
+  = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
+  
+  { Def rev, non empty cons axiom, first cons axiom, last cons axiom }
+    (app (app (rev (cons (first x) acc)) (first y)))) (weave (rest x) (rest y)))
+  = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
+
+  { Def rev, non empty cons axiom, first cons axiom, last cons axiom }
+   (app (app (app (rev acc) (first x)) (first y)))) (weave (rest x) (rest y)))
+  = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
+  { Def app, transitivity of app }
+  
+  QED for forth obligation
+  
+  QED for l1
+
 
  |#
  
