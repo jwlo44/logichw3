@@ -1259,9 +1259,9 @@ qed for obligation 2
  
   Prove
   (weave-t x y acc) = (app (rev acc) (weave x y))
-  { Def weave-t, c4, PL }
+  { Def weave-t, c4 }
   (app (rev acc) y) = (app (rev acc) (weave x y))
-  { Def weave, c4, PL }
+  { Def weave, c4, }
   (app (rev acc) y) = (app (rev acc) y)
   
   QED for second obligation
@@ -1275,9 +1275,9 @@ qed for obligation 2
   
   Prove
   (weave-t x y acc) = (app (rev acc) (weave x y))
-  { Def weave-t, c4, c5, PL }
+  { Def weave-t, c4, c5,  }
   (app (rev acc) x) = (app (rev acc) (weave x y))
-  { Def weave, c4, c5, PL }
+  { Def weave, c4, c5, }
   (app (rev acc) x) = (app (rev acc) x)
   
   QED for third obligation
@@ -1291,14 +1291,21 @@ qed for obligation 2
   c6. (and (listp (rest x)) (listp (rest y)) (listp (cons (first y) (cons (first x) acc)))) 
        => (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) 
            = (app (rev (cons (first y) (cons (first x) acc))) (weave (rest x) (rest y)))
+  ....
+  c7 listp rest x {c1, c4, rest, listp, endp}
+  c8 listp rest y {c2, c5, rest, listp, endp}
+  c9 (listp (cons (first y) (cons (first x) acc)))) {c3, listp, cons}
+  c10 (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) 
+           = (app (rev (cons (first y) (cons (first x) acc))) (weave (rest x) (rest y))) {c7, c8, c9, c6, MP}
+  
   
   Prove
   (weave-t x y acc) = (app (rev acc) (weave x y))
-  { Def weave-t, c4, c5, PL }
+  { Def weave-t, c4, c5 }
   (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) = (app (rev acc) (weave x y))
-  { Def weave, c4, c5, PL }
+  { Def weave, c4, c5}
   (weave-t (rest x) (rest y) (cons (first y) (cons (first x) acc))) = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
-  { c6, PL }
+  { c10 }
     (app (rev (cons (first y) (cons (first x) acc))) (weave (rest x) (rest y)))
   = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
   
@@ -1309,7 +1316,7 @@ qed for obligation 2
   { Def rev, non empty cons axiom, first cons axiom, last cons axiom }
    (app (app (app (rev acc) (first x)) (first y)))) (weave (rest x) (rest y)))
   = (app (rev acc) (cons (first x) (cons (first y) (weave (rest x) (rest y)))))
-  { Def app, transitivity of app }
+  { Def app, assoc of app }
   
   QED for forth obligation
   
